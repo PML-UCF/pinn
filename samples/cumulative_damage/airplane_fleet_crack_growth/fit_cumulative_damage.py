@@ -8,7 +8,9 @@ import sys
 
 sys.path.append('../../../')
 
-#from ../../ import ParisLaw, CumulativeDamageCell
+from pinn.layers import StressIntensityRange, ParisLaw, CumulativeDamageCell
+
+#import pinn.layers as pl
 
 if __name__ == "__main__":
     a = 1.0
