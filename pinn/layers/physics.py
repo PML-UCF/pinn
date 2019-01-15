@@ -1,3 +1,50 @@
+# ______          _           _     _ _ _     _   _      
+# | ___ \        | |         | |   (_) (_)   | | (_)     
+# | |_/ / __ ___ | |__   __ _| |__  _| |_ ___| |_ _  ___ 
+# |  __/ '__/ _ \| '_ \ / _` | '_ \| | | / __| __| |/ __|
+# | |  | | | (_) | |_) | (_| | |_) | | | \__ \ |_| | (__ 
+# \_|  |_|  \___/|_.__/ \__,_|_.__/|_|_|_|___/\__|_|\___|
+# ___  ___          _                 _                  
+# |  \/  |         | |               (_)                 
+# | .  . | ___  ___| |__   __ _ _ __  _  ___ ___         
+# | |\/| |/ _ \/ __| '_ \ / _` | '_ \| |/ __/ __|        
+# | |  | |  __/ (__| | | | (_| | | | | | (__\__ \        
+# \_|  |_/\___|\___|_| |_|\__,_|_| |_|_|\___|___/        
+#  _           _                     _                   
+# | |         | |                   | |                  
+# | |     __ _| |__   ___  _ __ __ _| |_ ___  _ __ _   _ 
+# | |    / _` | '_ \ / _ \| '__/ _` | __/ _ \| '__| | | |
+# | |___| (_| | |_) | (_) | | | (_| | || (_) | |  | |_| |
+# \_____/\__,_|_.__/ \___/|_|  \__,_|\__\___/|_|   \__, |
+#                                                   __/ |
+#                                                  |___/ 
+#														  
+# MIT License
+# 
+# Copyright (c) 2019 Probabilistic Mechanics Laboratory
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# ==============================================================================
+
+""" Physics-informed layers
+"""
+
 import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
@@ -15,6 +62,7 @@ from tensorflow.python.framework import common_shapes
 
 from tensorflow.linalg import diag as tfDiag
 from tensorflow.math import reciprocal
+
 
 class StressIntensityRange(Layer):
     """Just your regular stress intensity range implementation.
@@ -40,7 +88,6 @@ class StressIntensityRange(Layer):
         
     def build(self, input_shape):
         input_shape = tensor_shape.TensorShape(input_shape)
-#        input_dim = input_shape[-1]
         if input_shape[-1].value is None:
             raise ValueError('The last dimension of the inputs to `StressIntensityRange` '
                              'should be defined. Found `None`.')
@@ -51,7 +98,6 @@ class StressIntensityRange(Layer):
                                       constraint=self.kernel_constraint,
                                       dtype = self.dtype,
                                       trainable = True)
-#        self.input_dim   = input_dim
         self.built = True
 
     def call(self, inputs):
@@ -60,12 +106,12 @@ class StressIntensityRange(Layer):
             raise ValueError('`StressIntensityRange` only takes "rank 2" inputs.')
         output = self.kernel*inputs[:,1]*gen_math_ops.sqrt(np.pi*inputs[:,0])
         return output
-#        return array_ops.reshape(output, (output.shape[0],1))
     
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1)
 
+		
 class ParisLaw(Layer):
     """Just your regular Paris law implementation.
     `ParisLaw` implements the operation:
@@ -100,7 +146,6 @@ class ParisLaw(Layer):
             raise ValueError('`ParisLaw` only takes "rank 2" inputs.')
         output = self.kernel[0]*(inputs**self.kernel[1])
         return output
-#        return array_ops.reshape(output, (output.shape[0],1))
     
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
