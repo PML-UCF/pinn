@@ -108,7 +108,7 @@ if __name__ == "__main__":
                          batch_input_shape = batch_input_shape, a0RNN = a0RNN, myDtype = myDtype)
     
     #--------------------------------------------------------------------------
-    EPOCHS = 20
+    EPOCHS = 5
     jmdDir = "./training_%d_points" % len(idxTrain)
     weight_path = jmdDir + "/cp.ckpt"
     ModelCheckpoint = tf.keras.callbacks.ModelCheckpoint(filepath = weight_path, monitor = 'loss',

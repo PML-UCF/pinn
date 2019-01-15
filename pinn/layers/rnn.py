@@ -45,33 +45,14 @@
 """ RNN layers
 """
 
-import numpy as np
-
 from tensorflow.python.keras.engine.base_layer import Layer
-from tensorflow.keras.layers import Dense
-
-from tensorflow.python.keras import initializers
-from tensorflow.python.keras import regularizers
-from tensorflow.python.keras import constraints
-
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import array_ops
-from tensorflow.python.ops import gen_math_ops
 from tensorflow.python.framework import tensor_shape
-from tensorflow.python.framework import common_shapes
-
-from tensorflow.linalg import diag as tfDiag
-from tensorflow.math import reciprocal
 
 
 class CumulativeDamageCell(Layer):
-    """Cummulative damage implementation.
-    """
-
-    """
-    #TypeError: The argument 'cell' (<src.pmlPILayers.CumulativeDamageCell object at 0x0000013D4FD9A9B0>)
-    is not an RNNCell: 'output_size' property is missing, 'state_size' property is missing,
-    either 'zero_state' or 'get_initial_state' method is required.
+    """Cummulative damage cell implementation.
     """
     def __init__(self, model, units = 1, initial_damage = None, **kwargs):
         super(CumulativeDamageCell, self).__init__(**kwargs)

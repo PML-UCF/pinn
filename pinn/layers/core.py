@@ -45,20 +45,8 @@
 """ Core PINN layers
 """
 
-import numpy as np
-
-from tensorflow.python.keras.engine.base_layer import Layer
 from tensorflow.keras.layers import Dense
-
-from tensorflow.python.keras import initializers
-from tensorflow.python.keras import regularizers
-from tensorflow.python.keras import constraints
-
 from tensorflow.python.framework import ops
-from tensorflow.python.ops import array_ops
-from tensorflow.python.ops import gen_math_ops
-from tensorflow.python.framework import tensor_shape
-from tensorflow.python.framework import common_shapes
 
 from tensorflow.linalg import diag as tfDiag
 from tensorflow.math import reciprocal

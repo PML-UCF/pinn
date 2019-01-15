@@ -48,30 +48,25 @@
 import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
-from tensorflow.keras.layers import Dense
 
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 from tensorflow.python.keras import constraints
 
 from tensorflow.python.framework import ops
-from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import gen_math_ops
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import common_shapes
-
-from tensorflow.linalg import diag as tfDiag
-from tensorflow.math import reciprocal
 
 
 class StressIntensityRange(Layer):
     """Just your regular stress intensity range implementation.
     `StressIntensityRange` implements the operation:
-        `output = F*input[0]*sqrt(pi*input[1])
+        `output = F*input[:,1]*sqrt(pi*input[:,0])
         where:
             * `F` is a dimensionless function of geometry and the relative crack length,        
             * input[:,0] is the crack length, and
-            * input[:,1] is the nominal stress.
+            * input[:,1] is the nominal stress range.
     """
     def __init__(self,
                  kernel_initializer = 'glorot_uniform',
