@@ -54,8 +54,10 @@ class SN(Layer):
         self.built = True
 
     def call(self, inputs):
-        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        output = 1/10**(self.kernel[0]*inputs+self.kernel[1]) 
+        #inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
+        output = 1/10**(self.kernel[0]*inputs[:,1]+self.kernel[1])
+        if(output.shape[0].value is not None):
+            output = tf.reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
         return output
 
     def compute_output_shape(self, input_shape):
@@ -66,7 +68,7 @@ class SN(Layer):
 # =============================================================================
 def create_model(a, b, batch_input_shape, da0RNN, myDtype, return_sequences = False, unroll = False):
     n = batch_input_shape[0]
-    da_input_shape = (n,1)
+    da_input_shape = (n,2)
     daLayer = SN(input_shape = da_input_shape, dtype = myDtype)
     daLayer.build(input_shape = da_input_shape)
     daLayer.set_weights([np.asarray([a,b], dtype = daLayer.dtype)])
