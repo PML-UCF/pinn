@@ -22,11 +22,9 @@ from tensorflow.python.framework import tensor_shape
 import sys
 sys.path.append('../../')
 from pinn.layers import CumulativeDamageCell
-
 # =============================================================================
 # Layers
 # =============================================================================
-
 class SN(Layer):
     """ SN curve:
         `output = a*inputs+b
@@ -98,14 +96,6 @@ def create_model(a, b, batch_input_shape, da0RNN, myDtype, return_sequences = Fa
 # Main
 # =============================================================================
 myDtype = tf.float32
-# =============================================================================
-# np.random.seed(123)
-# a,b = 75,30
-# 
-# S = 40*np.random.rand(60,100)
-# d = np.sum(1/(a*S+b),axis = 1)
-# do = 0
-# =============================================================================
 P = np.linspace(240,6000,50)
 a = -10/3
 b = 13.372
