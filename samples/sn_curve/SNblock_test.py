@@ -8,6 +8,9 @@ Created on Thu Feb 21 15:28:16 2019
 import numpy as np
 import tensorflow as tf
 
+import sys
+sys.path.append('../../')
+
 import matplotlib.pyplot as plt
 
 from tensorflow.python.keras.engine.base_layer import Layer
@@ -144,8 +147,8 @@ fig.clf()
 
 plt.plot(1/da, P, '-', label = 'SN model')
 plt.plot(1/(results), P, 'r--', label = 'PINN')
-#plt.xscale('log')
-#plt.yscale('log')
+plt.xscale('log')
+plt.yscale('log')
 plt.xlabel('cycles')
 plt.ylabel('load')
 plt.grid(which = 'both')
