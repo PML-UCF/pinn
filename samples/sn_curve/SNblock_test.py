@@ -8,9 +8,6 @@ Created on Thu Feb 21 15:28:16 2019
 import numpy as np
 import tensorflow as tf
 
-import sys
-sys.path.append('../../')
-
 import matplotlib.pyplot as plt
 
 from tensorflow.python.keras.engine.base_layer import Layer
@@ -22,7 +19,9 @@ from tensorflow.python.keras import constraints
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import tensor_shape
 
-from rnn import CumulativeDamageCell
+import sys
+sys.path.append('../../')
+from pinn.layers import CumulativeDamageCell
 
 # =============================================================================
 # Layers
