@@ -76,7 +76,10 @@ class CumulativeDamageCell(Layer):
         states = ops.convert_to_tensor(states, dtype=self.dtype)
         
         states = states[0,:]
-        x_d_tm1 = array_ops.concat((states, inputs), axis = 1)
+        """TURKISH MAGIC STARTS HERE"""
+        #x_d_tm1 = array_ops.concat((states, inputs), axis = 1)
+        x_d_tm1 = inputs
+        """TURKISH MAGIC ENDS HERE"""
         da_t = self.model(x_d_tm1)
         d = da_t + states
         
