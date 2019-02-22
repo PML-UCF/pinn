@@ -136,4 +136,5 @@ if __name__ == "__main__":
     plt.ylim(yLB, yUB)
     plt.grid(which='both')
     plt.legend(loc = 'lower right',facecolor = 'w')
-    
+    plt.show()
+
