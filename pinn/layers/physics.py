@@ -49,8 +49,6 @@ import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
 
-#from tensorflow.python.eager import context
-
 from tensorflow import reshape, placeholder
 
 from tensorflow.python.keras import initializers
@@ -58,7 +56,6 @@ from tensorflow.python.keras import regularizers
 from tensorflow.python.keras import constraints
 
 from tensorflow.python.ops import gen_math_ops
-#from tensorflow.python.ops import standard_ops
 
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import tensor_shape
@@ -188,7 +185,6 @@ class ParisLaw(Layer):
         
         if inputs.shape[0].value is not None:
             output = self.kernel[0]*(inputs**self.kernel[1])
-#            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
         else:
             output = placeholder(dtype=self.dtype,
                                  shape=tensor_shape.TensorShape([inputs.shape[0],1]))
