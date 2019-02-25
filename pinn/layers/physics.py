@@ -49,15 +49,19 @@ import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
 
+from tensorflow import reshape, placeholder
+
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 from tensorflow.python.keras import constraints
 
-from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_math_ops
+
+from tensorflow.python.framework import ops
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import common_shapes
 
+from tensorflow.python.keras.engine.base_layer import InputSpec
 
 class StressIntensityRange(Layer):
     """Just your regular stress intensity range implementation.
@@ -71,21 +75,33 @@ class StressIntensityRange(Layer):
     def __init__(self,
                  kernel_initializer = 'glorot_uniform',
                  kernel_regularizer=None,
+                 activity_regularizer=None,
                  kernel_constraint=None,
                  **kwargs):
         if 'input_shape' not in kwargs and 'input_dim' in kwargs:
             kwargs['input_shape'] = (kwargs.pop('input_dim'),)
             
-        super(StressIntensityRange, self).__init__(**kwargs)
+        super(StressIntensityRange, self).__init__(
+            activity_regularizer=regularizers.get(activity_regularizer), **kwargs)
+            
+        self.units = int(1)
+#        self.units = int(units)
         self.kernel_initializer = initializers.get(kernel_initializer)
         self.kernel_regularizer = regularizers.get(kernel_regularizer)
         self.kernel_constraint  = constraints.get(kernel_constraint)
+        
+#        self.supports_masking = True
+        self.input_spec = InputSpec(min_ndim=2)
         
     def build(self, input_shape):
         input_shape = tensor_shape.TensorShape(input_shape)
         if input_shape[-1].value is None:
             raise ValueError('The last dimension of the inputs to `StressIntensityRange` '
                              'should be defined. Found `None`.')
+        
+        self.input_spec = InputSpec(min_ndim=2,
+                                    axes={-1: input_shape[-1].value})
+    
         self.kernel = self.add_weight("kernel",
                                       shape = [1],
                                       initializer = self.kernel_initializer,
@@ -96,10 +112,19 @@ class StressIntensityRange(Layer):
         self.built = True
 
     def call(self, inputs):
-        inputs  = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        if common_shapes.rank(inputs) is not 2:
+        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
+        rank   = common_shapes.rank(inputs)
+        if rank is not 2:
             raise ValueError('`StressIntensityRange` only takes "rank 2" inputs.')
-        output = self.kernel*inputs[:,1]*gen_math_ops.sqrt(np.pi*inputs[:,0])
+        
+        if inputs.shape[0].value is not None:
+            output = gen_math_ops.mul(self.kernel*inputs[:,1], gen_math_ops.sqrt(np.pi*inputs[:,0]))
+            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        else:
+            output = placeholder(dtype=self.dtype,
+                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
+        
+        # outputs should be (None, 1), so it is still rank = 2
         return output
     
     def compute_output_shape(self, input_shape):
@@ -116,30 +141,55 @@ class ParisLaw(Layer):
     def __init__(self,
                  kernel_initializer = 'glorot_uniform',
                  kernel_regularizer=None,
+                 activity_regularizer=None,
                  kernel_constraint=None,
                  **kwargs):
         if 'input_shape' not in kwargs and 'input_dim' in kwargs:
             kwargs['input_shape'] = (kwargs.pop('input_dim'),)
-        super(ParisLaw, self).__init__(**kwargs)
+            
+        super(ParisLaw, self).__init__(
+            activity_regularizer=regularizers.get(activity_regularizer), **kwargs)
+            
+        self.units = int(1)
+#        self.units = int(units)
         self.kernel_initializer = initializers.get(kernel_initializer)
         self.kernel_regularizer = regularizers.get(kernel_regularizer)
         self.kernel_constraint  = constraints.get(kernel_constraint)
         
-    def build(self, input_shape, **kwargs):
+#        self.supports_masking = True
+        self.input_spec = InputSpec(min_ndim=2)
+        
+    def build(self, input_shape):
+        input_shape = tensor_shape.TensorShape(input_shape)
+        if input_shape[-1].value is None:
+            raise ValueError('The last dimension of the inputs to `ParisLaw` '
+                             'should be defined. Found `None`.')
+        
+        self.input_spec = InputSpec(min_ndim=2,
+                                    axes={-1: input_shape[-1].value})
+        
         self.kernel = self.add_weight("kernel",
                                       shape = [2],
                                       initializer = self.kernel_initializer,
+                                      regularizer=self.kernel_regularizer,
+                                      constraint=self.kernel_constraint,
                                       dtype = self.dtype,
-                                      trainable = True,
-                                      **kwargs)
+                                      trainable = True)
         self.built = True
 
     def call(self, inputs):
         inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        rank = common_shapes.rank(inputs)
+        rank   = common_shapes.rank(inputs)
         if rank is not 2:
             raise ValueError('`ParisLaw` only takes "rank 2" inputs.')
-        output = self.kernel[0]*(inputs**self.kernel[1])
+        
+        if inputs.shape[0].value is not None:
+            output = self.kernel[0]*(inputs**self.kernel[1])
+        else:
+            output = placeholder(dtype=self.dtype,
+                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
+        
+        # outputs should be (None, 1), so it is still rank = 2
         return output
     
     def compute_output_shape(self, input_shape):
