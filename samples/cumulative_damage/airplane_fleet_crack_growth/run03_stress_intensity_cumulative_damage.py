@@ -125,12 +125,12 @@ if __name__ == "__main__":
     fig = plt.figure(ifig)
     fig.clf()
     
-    strAfter  = "Hybrid RNN\nMSE = %1.1e\nMAE = %1.1e" % (mseHybrid, maeHybrid)
-    strBefore = "Physics RNN\nMSE = %1.1e\nMAE = %1.1e" % (msePhysics, maePhysics)
+    strPhysics = "Physics RNN\nMSE = %1.1e\nMAE = %1.1e" % (msePhysics, maePhysics)
+    strHybrid  = "Hybrid RNN\nMSE = %1.1e\nMAE = %1.1e" % (mseHybrid, maeHybrid)
     
     plt.plot([yLB, yUB], [yLB, yUB], '--k')
-    plt.plot(aFleet[-1,:], aHybrid[-1,:], 'o', label = strAfter)
-    plt.plot(aFleet[-1,:], aPhysics[-1,:], 'o', label = strBefore)
+    plt.plot(aFleet[-1,:], aPhysics[-1,:], 'o', label = strPhysics)
+    plt.plot(aFleet[-1,:], aHybrid[-1,:], 'o', label = strHybrid)
     plt.xlabel('actual crack length (m)')
     plt.ylabel('predicted crack length (m)')
     plt.xlim(yLB, yUB)
