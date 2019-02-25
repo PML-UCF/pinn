@@ -98,7 +98,7 @@ def create_model(a, b, batch_input_shape, da0RNN, myDtype, return_sequences = Fa
 # Main
 # =============================================================================
 myDtype = tf.float32
-cycles = 10
+cycles = 1000
 machines = 50
 P = np.linspace(240,6000,50)
 
@@ -119,6 +119,17 @@ d = 1/10**N
 do = 0
 dlast = [np.sum(d[i]) for i in range(machines)]
 dlast = np.asarray(dlast)
+
+dhistall = []
+for mac in d:
+    dmgcum = 0
+    dhist = []
+    for cyc in mac:
+        dmgcum += cyc
+        dhist.append(dmgcum)
+    dhistall.append(dhist)
+dhistall = np.asarray(dhistall)
+
 #S = np.repeat(np.log10(macarray),cycles)
 #S = np.reshape(S,(np.shape(macarray)[0],cycles))
 
@@ -129,33 +140,39 @@ dlast = np.asarray(dlast)
 Sobs = macarray[:, :, np.newaxis]
 Sobs = np.log10(Sobs)
 Sobs = ops.convert_to_tensor(Sobs, dtype = myDtype)
-    
+
 batch_input_shape = Sobs.shape
 
-daTarget = dlast[:, np.newaxis]
+daTarget = dhistall[:,:, np.newaxis]
+#daTarget = dlast[:, np.newaxis]
 daTarget = ops.convert_to_tensor(daTarget, dtype=myDtype)
 
 da0RNN = ops.convert_to_tensor(do * np.ones((Sobs.shape[0], 1)), dtype=myDtype)
 #dkLayer.trainable = True
     
-model = create_model(a = a, b = b, batch_input_shape = batch_input_shape, da0RNN = da0RNN, myDtype = myDtype)
+model = create_model(a = a, b = b, batch_input_shape = batch_input_shape, da0RNN = da0RNN, myDtype = myDtype, return_sequences = True)
 
 model.fit(Sobs, daTarget ,epochs=5, steps_per_epoch=5)
 
 results = model.predict(Sobs, verbose=0, steps=1)
 print(results)
 "-------------------------------------------------------------------------"
-"""ifig = 0
+ifig = 0
 ifig = ifig + 1
 fig  = plt.figure(ifig)
 fig.clf()
 
-plt.plot(1/da, P, '-', label = 'SN model')
-plt.plot(1/(results), P, 'r--', label = 'PINN')
-plt.xscale('log')
-plt.yscale('log')
+plt.plot(range(cycles), dhistall[0],'b-', label = 'Machine 1 SN model')
+plt.plot(range(cycles), results[0],'r--', label = 'Machine 1 SN PINN')
+plt.plot(range(cycles), dhistall[1],'k-', label = 'Machine 2 SN model')
+plt.plot(range(cycles), results[1],'y--', label = 'Machine 2 SN PINN')
+plt.plot(range(cycles), dhistall[2],'c-', label = 'Machine 3 SN model')
+plt.plot(range(cycles), results[2],'m--', label = 'Machine 3 SN PINN')
+
+#plt.xscale('log')
+#plt.yscale('log')
 plt.xlabel('cycles')
-plt.ylabel('load')
+plt.ylabel('damage')
 plt.grid(which = 'both')
-plt.legend(loc=0, facecolor = 'w')""" 
+plt.legend(loc=0, facecolor = 'w')
 
