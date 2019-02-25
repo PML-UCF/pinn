@@ -98,7 +98,7 @@ def create_model(a, b, batch_input_shape, da0RNN, myDtype, return_sequences = Fa
 # Main
 # =============================================================================
 myDtype = tf.float32
-cycles = 1000
+cycles = 10
 machines = 50
 P = np.linspace(240,6000,50)
 
@@ -119,58 +119,43 @@ d = 1/10**N
 do = 0
 dlast = [np.sum(d[i]) for i in range(machines)]
 dlast = np.asarray(dlast)
+#S = np.repeat(np.log10(macarray),cycles)
+#S = np.reshape(S,(np.shape(macarray)[0],cycles))
 
-dhistall = []
-for mac in d:
-    dmgcum = 0
-    dhist = []
-    for cyc in mac:
-        dmgcum += cyc
-        dhist.append(dmgcum)
-    dhistall.append(dhist)
-dhistall = np.asarray(dhistall)
+#da = np.repeat(d,cycles)
+#da = np.reshape(da,(np.shape(macarray)[0],cycles))
+#da = np.sum(da,axis = 1)
 
 Sobs = macarray[:, :, np.newaxis]
 Sobs = np.log10(Sobs)
 Sobs = ops.convert_to_tensor(Sobs, dtype = myDtype)
-
+    
 batch_input_shape = Sobs.shape
 
-# Training 
-daTarget = dhistall[:,-1]
-daTarget = daTarget[:, np.newaxis] 
+daTarget = dlast[:, np.newaxis]
 daTarget = ops.convert_to_tensor(daTarget, dtype=myDtype)
 
 da0RNN = ops.convert_to_tensor(do * np.ones((Sobs.shape[0], 1)), dtype=myDtype)
+#dkLayer.trainable = True
     
-pre_model = create_model(a = a, b = b, batch_input_shape = batch_input_shape, 
-                         da0RNN = da0RNN, myDtype = myDtype)
-history = pre_model.fit(Sobs, daTarget ,epochs=5, steps_per_epoch=5)
+model = create_model(a = a, b = b, batch_input_shape = batch_input_shape, da0RNN = da0RNN, myDtype = myDtype)
 
-pre_model.save_weights('model_weights.h5')
+model.fit(Sobs, daTarget ,epochs=5, steps_per_epoch=5)
 
-model = create_model(a = a, b = b, batch_input_shape = batch_input_shape, 
-                     da0RNN = da0RNN, myDtype = myDtype, return_sequences = True)
-model.load_weights('model_weights.h5')
-
-results = model.predict_on_batch(Sobs)[:,:,0]
+results = model.predict(Sobs, verbose=0, steps=1)
+print(results)
 "-------------------------------------------------------------------------"
-ifig = 0
+"""ifig = 0
 ifig = ifig + 1
 fig  = plt.figure(ifig)
 fig.clf()
 
-plt.plot(range(cycles), dhistall[0],'b-', label = 'Machine 1 SN model')
-plt.plot(range(cycles), results[0],'r--', label = 'Machine 1 SN PINN')
-plt.plot(range(cycles), dhistall[1],'k-', label = 'Machine 2 SN model')
-plt.plot(range(cycles), results[1],'y--', label = 'Machine 2 SN PINN')
-plt.plot(range(cycles), dhistall[2],'c-', label = 'Machine 3 SN model')
-plt.plot(range(cycles), results[2],'m--', label = 'Machine 3 SN PINN')
-
-#plt.xscale('log')
-#plt.yscale('log')
+plt.plot(1/da, P, '-', label = 'SN model')
+plt.plot(1/(results), P, 'r--', label = 'PINN')
+plt.xscale('log')
+plt.yscale('log')
 plt.xlabel('cycles')
-plt.ylabel('damage')
+plt.ylabel('load')
 plt.grid(which = 'both')
-plt.legend(loc=0, facecolor = 'w')
+plt.legend(loc=0, facecolor = 'w')""" 
 
