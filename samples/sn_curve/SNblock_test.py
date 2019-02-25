@@ -174,3 +174,15 @@ plt.ylabel('damage')
 plt.grid(which = 'both')
 plt.legend(loc=0, facecolor = 'w')
 
+fig  = plt.figure(2)
+fig.clf()
+
+plt.plot(1/dhistall[:,-1], P,'b-', label = 'SN model')
+plt.plot(1/results[:,-1], P,'r--', label = 'PINN')
+
+plt.xscale('log')
+plt.yscale('log')
+plt.xlabel('cycles')
+plt.ylabel('load')
+plt.grid(which = 'both')
+plt.legend(loc=0, facecolor = 'w')
