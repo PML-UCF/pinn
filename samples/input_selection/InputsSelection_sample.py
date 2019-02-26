@@ -16,7 +16,9 @@ from tensorflow.python.framework import ops
 def inputsSelection(inputs, ndex):
     input_mask = np.zeros(inputs.get_shape(), dtype = int)
     input_mask[:,ndex] = 1
-    input_mask = ops.convert_to_tensor(input_mask, dtype = tf.int32)
+# =============================================================================
+#     input_mask = ops.convert_to_tensor(input_mask, dtype = tf.int32)
+# =============================================================================
         
     dL = Dense(inputs.get_shape()[-1], activation = None, input_shape = inputs.shape, 
                use_bias = False)
