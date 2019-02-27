@@ -45,6 +45,7 @@
 """ Physics-informed layers
 """
 
+import tensorflow as tf
 import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
@@ -195,4 +196,52 @@ class ParisLaw(Layer):
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1) 
-		
+
+
+class SNCurve(Layer):
+    """ SN-Curve implementation (REF: https://en.wikipedia.org/wiki/Fatigue_(material)#Stress-cycle_(S-N)_curve)
+        `output = 1/10**(a*inputs+b)`
+        where:
+            * `a`,`b` parametric constants for linear curve,
+            * input is cyclic stress, load, or temperature (depends on the application) in log10 space,
+            * output is delta damage
+        Notes:
+            * This layer represents SN-Curve linearized in log10-log10 space
+            * (a*inputs+b) expression gives number of cycles in log10 space corresponding to stress level
+        Linearization:
+            * For an SN-Curve with an equation of N = C1*(S**C2) , take log10 of both sides
+            * log10(N) = log10(C1) + C2*log10(S), yields to:
+                C2 = a
+                log10(C1) = b
+                log10(S) = inputs            
+    """
+    def __init__(self,
+                 kernel_initializer = 'glorot_uniform',
+                 kernel_regularizer=None,
+                 kernel_constraint=None,
+                 **kwargs):
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(SNCurve, self).__init__(**kwargs)
+        self.kernel_initializer = initializers.get(kernel_initializer)
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.kernel_constraint  = constraints.get(kernel_constraint)
+        
+    def build(self, input_shape, **kwargs):
+        self.kernel = self.add_weight("kernel",
+                                      shape = [2],
+                                      initializer = self.kernel_initializer,
+                                      dtype = self.dtype,
+                                      trainable = True,
+                                      **kwargs)
+        self.built = True
+
+    def call(self, inputs):
+        output = 1/10**(self.kernel[0]*inputs[:,1]+self.kernel[1])
+        if(output.shape[0].value is not None):
+            output = tf.reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        return output
+
+    def compute_output_shape(self, input_shape):
+        aux_shape = tensor_shape.TensorShape((None,1))
+        return aux_shape[:-1].concatenate(1) 
