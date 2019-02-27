@@ -42,42 +42,38 @@
 # SOFTWARE.
 # ==============================================================================
 
-""" Build physics-informed recursive neural network for SN-Curve sample
+""" Input selection sample case
 """
-
 import numpy as np
 import tensorflow as tf
 
 import sys
-sys.path.append('../../')
-from pinn.layers import CumulativeDamageCell
-from pinn.layers.physics import SNCurve
+sys.path.append('../../../')
+from pinn.layers.core import inputsSelection
 
-def create_model(a, b, batch_input_shape, da0RNN, myDtype, return_sequences = False, unroll = False):
-    n = batch_input_shape[0]
-    da_input_shape = (n,2)
-    daLayer = SNCurve(input_shape = da_input_shape, dtype = myDtype)
-    daLayer.build(input_shape = da_input_shape)
-    daLayer.set_weights([np.asarray([a,b], dtype = daLayer.dtype)])
-    daLayer.trainable = False
-    
-    PINN = tf.keras.Sequential()
-    PINN.add(daLayer)
-    "-------------------------------------------------------------------------"
-    CDMCell = CumulativeDamageCell(model = PINN,
-                                       batch_input_shape = batch_input_shape,
-                                       dtype = myDtype,
-                                       initial_damage = da0RNN)
-    
-    CDMRNN = tf.keras.layers.RNN(cell = CDMCell,
-                                       return_sequences = return_sequences,
-                                       return_state = False,
-                                       batch_input_shape = batch_input_shape,
-                                       unroll = unroll)
-    "-------------------------------------------------------------------------"
+# =============================================================================
+# Function
+# =============================================================================
+
+def create_model(input_array, ndex):
+    dLSelction = inputsSelection(input_array, ndex)
     model = tf.keras.Sequential()
-    model.add(CDMRNN)
-    
-    model.compile(loss='mse', optimizer=tf.keras.optimizers.RMSprop(1e-12), metrics=['mae'])
-    
+    model.add(dLSelction)
     return model
+
+# =============================================================================
+# Main
+# =============================================================================
+np.random.seed(123)
+
+input_array = np.random.random((10,5))
+input_shape = input_array.shape
+ndex = np.asarray([0,2,4])
+
+test_model = create_model(input_array, ndex)
+out = test_model.predict(input_array.reshape((1,10,5)))
+
+print("Input Array")
+print(input_array)
+print("Output Array")
+print(out)
