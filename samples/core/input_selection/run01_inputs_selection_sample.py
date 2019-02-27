@@ -42,41 +42,38 @@
 # SOFTWARE.
 # ==============================================================================
 
-""" Core PINN layers
+""" Input selection sample case
 """
-
-from tensorflow.keras.layers import Dense
-from tensorflow.python.framework import ops
-
-from tensorflow.linalg import diag as tfDiag
-from tensorflow.math import reciprocal
-
 import numpy as np
+import tensorflow as tf
 
-def getScalingDenseLayer(input_location, input_scale, dtype):
-    input_location    = ops.convert_to_tensor(input_location, dtype=dtype)
-    input_scale       = ops.convert_to_tensor(input_scale, dtype=dtype)
-    recip_input_scale = reciprocal(input_scale)
-    
-    waux = tfDiag(recip_input_scale)
-    baux = -input_location*recip_input_scale
-    
-    dL = Dense(input_location.get_shape()[0], activation = None, input_shape = input_location.shape)
-    dL.build(input_shape = input_location.shape)
-    dL.set_weights([waux, baux])
-    dL.trainable = False
-    return dL
+import sys
+sys.path.append('../../../')
+from pinn.layers.core import inputsSelection
 
-def inputsSelection(inputs, ndex):
-    input_mask = np.zeros([inputs.shape[-1], len(ndex)])
-    for i in range(inputs.shape[-1]):
-        for v in ndex:
-            if i == v:
-                input_mask[i,np.where(ndex == v)] = 1
-        
-    dL = Dense(len(ndex), activation = None, input_shape = inputs.shape, 
-               use_bias = False)
-    dL.build(input_shape = inputs.shape)
-    dL.set_weights([input_mask])
-    dL.trainable = False
-    return dL
+# =============================================================================
+# Function
+# =============================================================================
+
+def create_model(input_array, ndex):
+    dLSelction = inputsSelection(input_array, ndex)
+    model = tf.keras.Sequential()
+    model.add(dLSelction)
+    return model
+
+# =============================================================================
+# Main
+# =============================================================================
+np.random.seed(123)
+
+input_array = np.random.random((10,5))
+input_shape = input_array.shape
+ndex = np.asarray([0,2,4])
+
+test_model = create_model(input_array, ndex)
+out = test_model.predict(input_array.reshape((1,10,5)))
+
+print("Input Array")
+print(input_array)
+print("Output Array")
+print(out)
