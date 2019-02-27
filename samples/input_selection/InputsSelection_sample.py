@@ -14,9 +14,9 @@ from tensorflow.keras.layers import Dense
 def inputsSelection(inputs, ndex):
     input_mask = np.zeros([inputs.shape[-1], len(ndex)])
     for i in range(inputs.shape[-1]):
-        for v in range(len(ndex)):
+        for v in ndex:
             if i == v:
-                input_mask[i,v] = 1
+                input_mask[i,list(ndex).index(v)] = 1
         
     dL = Dense(len(ndex), activation = None, input_shape = inputs.shape, 
                use_bias = False)
