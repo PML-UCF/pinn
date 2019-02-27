@@ -53,7 +53,6 @@ from tensorflow.math import reciprocal
 
 import numpy as np
 
-
 def getScalingDenseLayer(input_location, input_scale, dtype):
     input_location    = ops.convert_to_tensor(input_location, dtype=dtype)
     input_scale       = ops.convert_to_tensor(input_scale, dtype=dtype)
