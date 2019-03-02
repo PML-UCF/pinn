@@ -50,20 +50,27 @@ import tensorflow as tf
 import sys
 sys.path.append('../../../')
 from pinn.layers.core import inputsSelection
-
 # =============================================================================
 # Function
 # =============================================================================
 
-def create_model(input_array, ndex):
-    dLSelction = inputsSelection(input_array, ndex)
-    model = tf.keras.Sequential()
-    model.add(dLSelction)
-    return model
+# =============================================================================
+# def create_model(input_array, ndex):
+#     dLSelction = inputsSelection(input_array, ndex)
+#     model = tf.keras.Sequential()
+#     model.add(dLSelction)
+#     return model
+# =============================================================================
 
 # =============================================================================
 # Main
 # =============================================================================
+ath = .5e-3
+a = np.linspace(0,1e-3,1000)
+alpha = 1
+sig = 1/(1+np.exp(-alpha*(a-ath)))
+
+
 np.random.seed(123)
 
 input_array = np.random.random((10,5))
