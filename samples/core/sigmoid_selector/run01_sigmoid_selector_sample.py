@@ -45,34 +45,72 @@
 """ Input selection sample case
 """
 import numpy as np
+import pandas as pd
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 import sys
 sys.path.append('../../../')
-from pinn.layers.core import inputsSelection
-
+from pinn.layers.core import SigmoidSelector
 # =============================================================================
-# Function
+# functions
 # =============================================================================
-def create_model(input_array, ndex):
-    dLSelction = inputsSelection(input_array, ndex)
+def create_model(alpha, ath, batch_input_shape, myDtype):
+    thLayer = SigmoidSelector(input_shape = batch_input_shape, dtype = myDtype)
+    thLayer.build(input_shape = batch_input_shape)
+    thLayer.set_weights([np.asarray([alpha,ath], dtype = thLayer.dtype)])
+    thLayer.trainable = False
+    
     model = tf.keras.Sequential()
-    model.add(dLSelction)
+    model.add(thLayer)
+        
     return model
+
+def threshold(dai,dap,a,ath): # implementation of the layer in matrix form for comparison purposes
+    alpha = 1e6
+    m = 1/(1+np.exp(-alpha*(a-ath)))
+    da = m*dap+(1-m)*dai
+    return da
 # =============================================================================
 # Main
 # =============================================================================
 if __name__ == "__main__":
-    np.random.seed(123)
+    myDtype = tf.float32  # defining type for the layer
+    
+    df = pd.read_csv('Crack_info_50_machines.csv', index_col = None) # loading crack length data
+    input_array = np.asarray([df['a'],df['dai'],df['dap']])
+    input_array = np.transpose(input_array)
+    
+    a = df['a'].values # crack lengths for 50 different machines at a given instant t.
+    dai = df['dai'].values # crack length increment in the initiation stage
+    dap = df['dap'].values # crack length increment in the propagation stage
+    
+    ath = .5e-3  # crack length that defines the transition from initiation to propagation stage. 
+    alpha = 1e6  # constant required by the customized sigmoid function in the layeer
+    
+      
+    danp = threshold(dai,dap,a,ath) # prediction of the genereic function
+    
+    batch_input_shape = (input_array.shape[-1],)
+    
+    model = create_model(alpha = alpha, ath = ath, batch_input_shape = batch_input_shape, 
+                         myDtype = myDtype)
+    results = model.predict_on_batch(input_array) # custumized layer prediction
+    #--------------------------------------------------------------------------
+    fig  = plt.figure(1)
+    fig.clf()
+    
+    plt.plot(a*1e3,dai*1e3,':r', label = 'init.')
+    plt.plot(a*1e3,dap*1e3,':b', label = 'prop.')
+    plt.plot(a*1e3,danp*1e3,'ok', label = 'numpy')
+    plt.plot(a*1e3,results*1e3,'sm', label = 'tf Layer')
+    
+    
+    plt.title('Sigmoid Selector function response')
+    plt.xlabel('crack length [mm]')
+    plt.ylabel('$\Delta$ a [mm]')
+    plt.legend(loc=0, facecolor = 'w')
+    plt.grid(which = 'both')
+    #--------------------------------------------------------------------------
+    
 
-    input_array = np.random.random((10,5))
-    input_shape = input_array.shape
-    ndex = np.asarray([0,2,4])
-
-    test_model = create_model(input_array, ndex)
-    out = test_model.predict(input_array.reshape((1,10,5)))
-
-    print("Input Array")
-    print(input_array)
-    print("Output Array")
-    print(out)
