@@ -44,7 +44,6 @@
 
 """ Core PINN layers
 """
-
 from tensorflow.keras.layers import Dense
 from tensorflow.python.framework import ops
 
@@ -52,6 +51,16 @@ from tensorflow.linalg import diag as tfDiag
 from tensorflow.math import reciprocal
 
 import numpy as np
+
+import tensorflow as tf
+from tensorflow.python.keras.engine.base_layer import Layer
+
+from tensorflow.python.keras import initializers
+from tensorflow.python.keras import regularizers
+from tensorflow.python.keras import constraints
+
+from tensorflow.python.framework import tensor_shape
+from tensorflow.python.ops import gen_math_ops
 
 def getScalingDenseLayer(input_location, input_scale, dtype):
     input_location    = ops.convert_to_tensor(input_location, dtype=dtype)
@@ -80,3 +89,46 @@ def inputsSelection(inputs, ndex):
     dL.set_weights([input_mask])
     dL.trainable = False
     return dL
+
+class SigmoidSelector(Layer):
+    """ 
+        `output = sig*inputs[:,2]+(1-sig)*inputs[:,1]`
+        where:
+            * `sig` is the response of the sigmoid function used to filter between 
+                    initiation and propagation mechanisms,
+            * inputs[:,0] is current crack length of the previous time step,
+            * inputs[:,1] is crack length variation for the initiation stage,
+            * inputs[:,2] is crack length variation for the propagation stage,
+            * output is the overall crack length variation         
+    """
+    def __init__(self,
+                 kernel_initializer = 'glorot_uniform',
+                 kernel_regularizer=None,
+                 kernel_constraint=None,
+                 **kwargs):
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(SigmoidSelector, self).__init__(**kwargs)
+        self.kernel_initializer = initializers.get(kernel_initializer)
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.kernel_constraint  = constraints.get(kernel_constraint)
+        
+    def build(self, input_shape, **kwargs):
+        self.kernel = self.add_weight("kernel",
+                                      shape = [2],
+                                      initializer = self.kernel_initializer,
+                                      dtype = self.dtype,
+                                      trainable = True,
+                                      **kwargs)
+        self.built = True
+
+    def call(self, inputs):
+        sig = 1/(1+gen_math_ops.exp(-self.kernel[0]*(inputs[:,0]-self.kernel[1])))
+        output = sig*inputs[:,2]+(1-sig)*inputs[:,1]
+        if(output.shape[0].value is not None):
+            output = tf.reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        return output
+
+    def compute_output_shape(self, input_shape):
+        aux_shape = tensor_shape.TensorShape((None,1))
+        return aux_shape[:-1].concatenate(1) 
