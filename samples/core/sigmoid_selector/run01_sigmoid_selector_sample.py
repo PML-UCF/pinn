@@ -45,6 +45,7 @@
 """ Input selection sample case
 """
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
@@ -75,21 +76,21 @@ def threshold(dai,dap,a,ath): # implementation of the layer in matrix form for c
 # =============================================================================
 if __name__ == "__main__":
     myDtype = tf.float32  # defining type for the layer
-    np.random.seed(123)   # assigning a seed value for the random number generator
+    
+    df = pd.read_csv('Crack_info_50_machines.csv', index_col = None) # loading crack length data
+    input_array = np.asarray([df['a'],df['dai'],df['dap']])
+    input_array = np.transpose(input_array)
+    
+    a = df['a'].values # crack lengths for 50 different machines at a given instant t.
+    dai = df['dai'].values # crack length increment in the initiation stage
+    dap = df['dap'].values # crack length increment in the propagation stage
     
     ath = .5e-3  # crack length that defines the transition from initiation to propagation stage. 
     alpha = 1e6  # constant required by the customized sigmoid function in the layeer
     
-    aux = np.linspace(0,1e-3,1000) 
-    a = np.random.choice(aux,50)  # assigning random crack lengths for 50 different machines at 
-                                  # a given instant t. 
-    
-    dai = .25e-3*np.ones(len(a)) # random value of crack length increment in the initiation stage
-    dap = .75e-3*np.ones(len(a)) # random value of crack length increment in the propagation stage
+      
     danp = threshold(dai,dap,a,ath) # prediction of the genereic function
     
-    input_array = np.asarray([a,dai,dap]) 
-    input_array = np.transpose(input_array)
     batch_input_shape = (input_array.shape[-1],)
     
     model = create_model(alpha = alpha, ath = ath, batch_input_shape = batch_input_shape, 
