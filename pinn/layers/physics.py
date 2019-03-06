@@ -245,3 +245,47 @@ class SNCurve(Layer):
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1) 
+    
+class WalkerModel(Layer):
+    """A modified version of Paris law to take into account the stress ratio effect.
+    `WalkerModel` implements the operation:
+        `output = C*(inputs[:,0]**m)`
+        where `C` and `m` are constants, and `C` is obtained from the following
+        relation:
+            `C = Co/((1-inputs[:,1])**(m*(1-inputs[:,2]))))`
+            
+            * input[:,0] is the nominal stress range
+            * input[:,1] is the stress ratio, and
+            * input[:,2] is Walker's coefficient (its value depends on the stress ratio).        
+    """
+    def __init__(self,
+                 kernel_initializer = 'glorot_uniform',
+                 kernel_regularizer=None,
+                 kernel_constraint=None,
+                 **kwargs):
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(WalkerModel, self).__init__(**kwargs)
+        self.kernel_initializer = initializers.get(kernel_initializer)
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.kernel_constraint  = constraints.get(kernel_constraint)
+        
+    def build(self, input_shape, **kwargs):
+        self.kernel = self.add_weight("kernel",
+                                      shape = [2],
+                                      initializer = self.kernel_initializer,
+                                      dtype = self.dtype,
+                                      trainable = True,
+                                      **kwargs)
+        self.built = True
+
+    def call(self, inputs):
+        C = self.kernel[0]/((1-inputs[:,1])**(self.kernel[1]*(1-inputs[:,2])))
+        output = C*(inputs[:,0]**self.kernel[1])
+        if(output.shape[0].value is not None):
+            output = tf.reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        return output
+
+    def compute_output_shape(self, input_shape):
+        aux_shape = tensor_shape.TensorShape((None,1))
+        return aux_shape[:-1].concatenate(1) 
