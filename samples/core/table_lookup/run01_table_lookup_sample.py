@@ -97,13 +97,13 @@ class tableInterpolation(Layer):
         self.kernel_constraint  = constraints.get(kernel_constraint)
         
     def build(self, input_shape, **kwargs):
-        self.grid = self.add_weight("kernel",
+        self.grid = self.add_weight("grid",
                                       shape = [3,3],
                                       initializer = self.kernel_initializer,
                                       dtype = self.dtype,
                                       trainable = True,
                                       **kwargs)
-        self.bounds = self.add_weight("bias",
+        self.bounds = self.add_weight("bounds",
                                       shape = [2,2],
                                       initializer = self.kernel_initializer,
                                       dtype = self.dtype,
@@ -114,8 +114,9 @@ class tableInterpolation(Layer):
     def call(self, inputs):
         self.grid = tf.expand_dims(self.grid,0)
         self.grid = tf.expand_dims(self.grid,-1)
-        queryPointsX_ind = (self.grid.shape[0]-1)*(inputs[0]-self.bounds[0][0])/(self.bounds[0][1]-self.bounds[0][0])
-        queryPointsV_ind = (self.grid.shape[1]-1)*(inputs[1]-self.bounds[1][0])/(self.bounds[1][1]-self.bounds[1][0])
+        self.bounds = ops.convert_to_tensor(self.bounds,dtype=tf.float32)
+        queryPointsX_ind = (tf.to_float(tf.shape(self.grid)[1])-tf.constant(1.0))*(tf.transpose(inputs[0])[0]-self.bounds[0][0])/(self.bounds[0][1]-self.bounds[0][0])
+        queryPointsV_ind = (tf.to_float(tf.shape(self.grid)[2])-tf.constant(1.0))*(tf.transpose(inputs[0])[1]-self.bounds[1][0])/(self.bounds[1][1]-self.bounds[1][0])
         queryPoints_ind = tf.stack([queryPointsX_ind,queryPointsV_ind],1)
         queryPoints_ind = tf.expand_dims(queryPoints_ind,0)
         output = interp(self.grid, queryPoints_ind)
@@ -138,13 +139,14 @@ data = np.asarray([[0,0,0],[1,2,3],[10,20,30]])
 space = np.asarray([[500,750,1000],[4,6,8]])
 bounds = np.asarray([[np.min(space[0]),np.max(space[0])],[np.min(space[1]),np.max(space[1])]])
 #data = data[np.newaxis,:,:,np.newaxis]
-grid = ops.convert_to_tensor(data,dtype=tf.float32)
-q = np.asarray([[0.0,0.0],[1.5,1.0],[2.0,2.0]])
+#grid = ops.convert_to_tensor(data,dtype=tf.float32)
+q = np.asarray([[600.0,5.0],[1.5,1.0],[2.0,2.0]])
 
 #q = q[np.newaxis,:,:]
 input_array = ops.convert_to_tensor(q,dtype=tf.float32)
 input_shape = input_array.shape
+input_array= tf.expand_dims(input_array,0)
 
-model = create_model(grid, bounds, input_shape)
-result = model.predict(input_array)
+model = create_model(data, bounds, input_shape)
+result = model.predict(input_array, steps = 1)
 print(result)
