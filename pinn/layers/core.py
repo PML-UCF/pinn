@@ -80,3 +80,4 @@ def inputsSelection(inputs, ndex):
     dL.set_weights([input_mask])
     dL.trainable = False
     return dL
+ 
