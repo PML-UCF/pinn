@@ -47,6 +47,7 @@ import pandas as pd
 import tensorflow as tf
 
 from tensorflow.python.framework import ops
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, multiply
 
 import sys
@@ -59,27 +60,28 @@ from pinn.layers.core import inputsSelection
 # Model
 def create_model(a, b, d0RNN, batch_input_shape, input_array, selectCycle, selectLoad, myDtype, return_sequences = False, unroll = False):
     
-    filterCycleLayer = inputsSelection(input_array, selectCycle)
+    batch_adjusted_shape = (batch_input_shape[0], batch_input_shape[1], batch_input_shape[2]+1) #Adding state
+    placeHolder = Input(shape=(batch_input_shape[0],batch_input_shape[2]+1,)) #Adding state
     
-    filterLoadLayer = inputsSelection(input_array, selectLoad)
+    filterCycleLayer = inputsSelection(batch_adjusted_shape, selectCycle)(placeHolder)
+    
+    filterLoadLayer = inputsSelection(batch_adjusted_shape, selectLoad)(placeHolder)
     
     n = batch_input_shape[0]
-    sn_input_shape = (n,2)
+    sn_input_shape = (n, 3)
     
     SNLayer = SNCurve(input_shape = sn_input_shape, dtype = myDtype)
     SNLayer.build(input_shape = sn_input_shape)
-    SNLayer.set_weights([np.asarray([a,b], dtype = SNLayer.dtype)])
+    SNLayer.set_weights([np.asarray([a, b], dtype = SNLayer.dtype)])
     SNLayer.trainable = False
+    SNLayer = SNLayer(filterLoadLayer)
     
-    multiplyLayer = multiply([SNLayer,filterCycleLayer])
+    multiplyLayer = multiply([SNLayer, filterCycleLayer])
     
-    PINNphysics = tf.keras.Sequential()
-    PINNphysics.add(filterLoadLayer)
-    PINNphysics.add(SNLayer)
-    PINNphysics.add(multiplyLayer)
-    
+    functionalModel = Model(inputs = [placeHolder], outputs = [multiplyLayer])
+
     "-------------------------------------------------------------------------"
-    CDMCellHybrid = CumulativeDamageCell(model = PINNphysics,
+    CDMCellHybrid = CumulativeDamageCell(model = functionalModel,
                                        batch_input_shape = batch_input_shape,
                                        dtype = myDtype,
                                        initial_damage = d0RNN)
@@ -103,13 +105,15 @@ if __name__ == "__main__":
     
     a = -10/3                  # Slope of linearized SN-Curve in log10-log10 space
     b = 12.594                 # Interception of linearized SN-Curve in log10-log10 space
-    d0RNN = 0
+    d0RNN = 0.0
     
     # Inputs
     df = pd.read_csv('Cycles.csv', index_col = None)
+    df = df.dropna()
     cycFleet = np.transpose(np.asarray(df))
     
     df = pd.read_csv('DynamicLoad.csv', index_col = None)
+    df = df.dropna()
     PFleet = np.transpose(np.asarray(df))
     nFleet, n10min = PFleet.shape
     
@@ -122,3 +126,4 @@ if __name__ == "__main__":
     d0RNN = ops.convert_to_tensor(d0RNN * np.ones((inputArray.shape[0], 1)), dtype=myDtype)
             
     model = create_model(a, b, d0RNN, batch_input_shape, inputTensor, selectCycle, selectLoad, myDtype, return_sequences = True)
+    result = model.predict(inputArray)
