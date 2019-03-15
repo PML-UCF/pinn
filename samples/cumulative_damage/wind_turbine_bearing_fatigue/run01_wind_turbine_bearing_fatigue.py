@@ -43,54 +43,39 @@
 # ==============================================================================
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Multiply
+from tensorflow.python.framework import ops
 
-import sys
-sys.path.append('../../../')
+from model import create_model
 
-from pinn.layers import CumulativeDamageCell
-from pinn.layers.physics import SNCurve
-from pinn.layers.core import inputsSelection
+if __name__ == "__main__":
 
-# Model
-def create_model(a, b, d0RNN, batch_input_shape, input_array, selectCycle, selectLoad, myDtype, return_sequences = False, unroll = False):
+    # Preliminaries
+    myDtype = tf.float32
     
-    batch_adjusted_shape = (batch_input_shape[0], batch_input_shape[1], batch_input_shape[2]+1) #Adding state
-    placeHolder = Input(shape=(batch_input_shape[0],batch_input_shape[2]+1,)) #Adding state
+    a = -10/3                  # Slope of linearized SN-Curve in log10-log10 space
+    b = (10/3)*np.log10(6000)  # Interception of linearized SN-Curve in log10-log10 space
+    d0RNN = 0.0
     
-    filterCycleLayer = inputsSelection(batch_adjusted_shape, selectCycle)(placeHolder)
+    # Inputs
+    df = pd.read_csv('Cycles.csv', index_col = None)
+    df = df.dropna()
+    cycFleet = np.transpose(np.asarray(df))
     
-    filterLoadLayer = inputsSelection(batch_adjusted_shape, selectLoad)(placeHolder)
+    df = pd.read_csv('DynamicLoad.csv', index_col = None)
+    df = df.dropna()
+    PFleet = np.transpose(np.log10(np.asarray(df)))
+    nFleet, n10min = PFleet.shape
     
-    n = batch_input_shape[0]
-    sn_input_shape = (n, 3)
+    inputArray = np.dstack((cycFleet, PFleet))
+    selectCycle = [1]
+    selectLoad = [2]
+    batch_input_shape = inputArray.shape
+    inputTensor = ops.convert_to_tensor(inputArray, dtype = myDtype)
     
-    SNLayer = SNCurve(input_shape = sn_input_shape, dtype = myDtype)
-    SNLayer.build(input_shape = sn_input_shape)
-    SNLayer.set_weights([np.asarray([a, b], dtype = SNLayer.dtype)])
-    SNLayer.trainable = False
-    SNLayer = SNLayer(filterLoadLayer)
-    
-    multiplyLayer = Multiply()([SNLayer, filterCycleLayer])
-    
-    functionalModel = Model(inputs = [placeHolder], outputs = [multiplyLayer])
-
-    "-------------------------------------------------------------------------"
-    CDMCellHybrid = CumulativeDamageCell(model = functionalModel,
-                                       batch_input_shape = batch_input_shape,
-                                       dtype = myDtype,
-                                       initial_damage = d0RNN)
-     
-    CDMRNNhybrid = tf.keras.layers.RNN(cell = CDMCellHybrid,
-                                       return_sequences = return_sequences,
-                                       return_state = False,
-                                       batch_input_shape = batch_input_shape,
-                                       unroll = unroll)
-    
-    model = tf.keras.Sequential()
-    model.add(CDMRNNhybrid)
-    model.compile(loss='mse', optimizer=tf.keras.optimizers.RMSprop(1e-12), metrics=['mae'])
-    return model
+    d0RNN = ops.convert_to_tensor(d0RNN * np.ones((inputArray.shape[0], 1)), dtype=myDtype)
+            
+    model = create_model(a, b, d0RNN, batch_input_shape, inputTensor, selectCycle, selectLoad, myDtype, return_sequences = True)
+    result = model.predict(inputArray)
