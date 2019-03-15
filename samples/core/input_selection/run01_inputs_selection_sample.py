@@ -54,8 +54,8 @@ from pinn.layers.core import inputsSelection
 # =============================================================================
 # Function
 # =============================================================================
-def create_model(input_array, ndex):
-    dLSelction = inputsSelection(input_array, ndex)
+def create_model(input_shape, ndex):
+    dLSelction = inputsSelection(input_shape, ndex)
     model = tf.keras.Sequential()
     model.add(dLSelction)
     return model
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     input_shape = input_array.shape
     ndex = np.asarray([0,2,4])
 
-    test_model = create_model(input_array, ndex)
+    test_model = create_model(input_shape, ndex)
     out = test_model.predict(input_array.reshape((1,10,5)))
 
     print("Input Array")
