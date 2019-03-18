@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar 18 10:56:02 2019
+
+@author: ar679403
+"""
+
 # ______          _           _     _ _ _     _   _      
 # | ___ \        | |         | |   (_) (_)   | | (_)     
 # | |_/ / __ ___ | |__   __ _| |__  _| |_ ___| |_ _  ___ 
@@ -57,30 +64,40 @@ from pinn.layers.physics import WalkerModel
 # =============================================================================
 # Functions
 # =============================================================================
-def create_model(alpha, gamma, Co, m , batch_input_shape, myDtype):
-    wmLayer = WalkerModel(input_shape = batch_input_shape, dtype = myDtype)
-    wmLayer.build(input_shape = batch_input_shape)
+def create_model(F,alpha, gamma, Co, m , batch_input_shape, da0RNN, myDtype, return_sequences = False, unroll = False):
+    dk_input_shape = batch_input_shape
+    
+    dkLayer = StressIntensityRange(input_shape = dk_input_shape, dtype = myDtype)
+    dkLayer.build(input_shape = dk_input_shape)
+    dkLayer.set_weights([np.asarray([F], dtype = dkLayer.dtype)])
+    dkLayer.trainable = False
+    
+    wm_input_shape = tensor_shape.TensorShape([None, 2])
+    wmLayer = WalkerModel(input_shape = wm_input_shape, dtype = myDtype)
+    wmLayer.build(input_shape = wm_input_shape)
     wmLayer.set_weights([np.asarray([alpha,gamma,Co,m], dtype = wmLayer.dtype)])
     wmLayer.trainable = False
     
+    PINNhybrid = tf.keras.Sequential()
+    PINNhybrid.add(dkLayer)
+    PINNhybrid.add(wmLayer)
+
+    "-------------------------------------------------------------------------"
+    CDMCellHybrid = CumulativeDamageCell(model = PINNhybrid,
+                                       batch_input_shape = batch_input_shape,
+                                       dtype = myDtype,
+                                       initial_damage = a0RNN)
+     
+    CDMRNNhybrid = tf.keras.layers.RNN(cell = CDMCellHybrid,
+                                       return_sequences = return_sequences,
+                                       return_state = False,
+                                       batch_input_shape = batch_input_shape,
+                                       unroll = unroll)
+
     model = tf.keras.Sequential()
-    model.add(wmLayer)        
+    model.add(CDMRNNhybrid)
+    model.compile(loss='mse', optimizer=tf.keras.optimizers.RMSprop(1e-12), metrics=['mae'])       
     return model
-
-def threshold(R,gammaval): # numpy implementation of the step function to calibrate gamma value 
-    gamma = np.zeros(len(R))
-    for i in range(len(R)):
-        if R[i]<0:
-            gamma[i] = 0
-        else:
-            gamma[i] = gammaval
-    return gamma
-
-def walker(dK,R,gammaval,Co,m): # implementation of the layer in matrix form for comparison purposes
-    gamma = threshold(R,gammaval)
-    C = Co/((1-R)**(m*(1-gamma)))
-    da = C*(dK**m)
-    return da
 #--------------------------------------------------------------------------
 if __name__ == "__main__":
     myDtype = tf.float32  # defining type for the layer
@@ -88,41 +105,35 @@ if __name__ == "__main__":
     df = pd.read_csv('Walker_model_data.csv', index_col = None) # loading required data
     dK = df['dK'].values # stress intensity values for 10 different machines at a given instant t
     R = df['R'].values # stress ratio values for 10 different machines at a given instant t
-    #--------------------------------------------------------------------
-    # Numpy implementation of Walker's equation coefficient
-    gammaval = .68
-    gammanp = threshold(R,gammaval)
-    #--------------------------------------------------------------------
+    gamma = threshold(R) # Walker model coefficient
+    
+    
+    
     input_array = np.asarray([dK,R])
     input_array = np.transpose(input_array)
     
-    alpha,gammatf = -1e8,gammaval # Walker model customized sigmoid function parameters
+    alpha,gamma = -1e8,.68 # Walker model customized sigmoid function parameters
     Co,m = 1.1323e-10,3.859 # Walker model coefficients (similar to Paris law) 
     #--------------------------------------------------------------------------
-    danp = walker(dK,R,gammaval,Co,m) # prediction of the genereic function
+    danp = walker(dK,R,Co,m) # prediction of the genereic function
     
     batch_input_shape = (input_array.shape[-1],)
     
-    model = create_model(alpha = alpha, gamma = gammatf, Co = Co, m = m, batch_input_shape = batch_input_shape, myDtype = myDtype)
+    model = create_model(alpha = alpha, gamma = gamma, Co = Co, m = m, batch_input_shape = batch_input_shape, myDtype = myDtype)
     results = model.predict_on_batch(input_array) # custumized layer prediction
     #--------------------------------------------------------------------------
-    fig  = plt.figure(1)
-    fig.clf()
-    
-    plt.plot(R,gammanp,'ok', label = 'numpy')
-    plt.xlabel('R')
-    plt.ylabel('gammma')
-    plt.legend(loc=0, facecolor = 'w')
-    plt.grid(which = 'both')
-    #--------------------------------------------------------------------
     fig  = plt.figure(2)
     fig.clf()
     
     plt.plot(dK,danp,'ok', label = 'numpy')
     plt.plot(dK,results,'sm', label = 'tf Layer')
-        
+    
+    
     plt.title('Walker model response')
     plt.xlabel('$\Delta$ K [MPa $m^{1/2}$]')
     plt.ylabel('$\Delta$ a [m]')
     plt.legend(loc=0, facecolor = 'w')
     plt.grid(which = 'both')
+    #--------------------------------------------------------------------------
+  
+    git che
