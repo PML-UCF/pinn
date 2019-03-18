@@ -57,17 +57,24 @@ from pinn.layers.physics import WalkerModel
 # =============================================================================
 # Functions
 # =============================================================================
-def create_model(Co, m , batch_input_shape, myDtype):
+def create_model(alpha, gamma, Co, m , batch_input_shape, myDtype):
     wmLayer = WalkerModel(input_shape = batch_input_shape, dtype = myDtype)
     wmLayer.build(input_shape = batch_input_shape)
-    wmLayer.set_weights([np.asarray([Co,m], dtype = wmLayer.dtype)])
+    wmLayer.set_weights([np.asarray([alpha,gamma,Co,m], dtype = wmLayer.dtype)])
     wmLayer.trainable = False
     
     model = tf.keras.Sequential()
     model.add(wmLayer)        
     return model
 
-def walker(dK,R,gamma,Co,m): # implementation of the layer in matrix form for comparison purposes
+def threshold(R): # sigmoid function to calibrate gamma value with respect to R
+    alpha = 1e8
+    m = 1/(1+np.exp(-alpha*R))
+    gamma = m*0.68
+    return gamma
+
+def walker(dK,R,Co,m): # implementation of the layer in matrix form for comparison purposes
+    gamma = threshold(R)
     C = Co/((1-R)**(m*(1-gamma)))
     da = C*(dK**m)
     return da
@@ -76,24 +83,35 @@ if __name__ == "__main__":
     myDtype = tf.float32  # defining type for the layer
     
     df = pd.read_csv('Walker_model_data.csv', index_col = None) # loading required data
-    input_array = np.asarray([df['dK'],df['R'],df['gamma']])
-    input_array = np.transpose(input_array)
-    
     dK = df['dK'].values # stress intensity values for 10 different machines at a given instant t
     R = df['R'].values # stress ratio values for 10 different machines at a given instant t
-    gamma = df['gamma'].values # Walker model coefficient
+    gamma = threshold(R) # Walker model coefficient
     
+    #--------------------------------------------------------------------
+    fig  = plt.figure(1)
+    fig.clf()
+    
+    plt.plot(R,gamma,'ok', label = 'numpy')
+    plt.xlabel('R')
+    plt.ylabel('gammma')
+    plt.legend(loc=0, facecolor = 'w')
+    plt.grid(which = 'both')
+    #--------------------------------------------------------------------
+    
+    input_array = np.asarray([dK,R])
+    input_array = np.transpose(input_array)
+    
+    alpha,gamma = -1e8,.68 # Walker model customized sigmoid function parameters
     Co,m = 1.1323e-10,3.859 # Walker model coefficients (similar to Paris law) 
-    
     #--------------------------------------------------------------------------
-    danp = walker(dK,R,gamma,Co,m) # prediction of the genereic function
+    danp = walker(dK,R,Co,m) # prediction of the genereic function
     
     batch_input_shape = (input_array.shape[-1],)
     
-    model = create_model(Co = Co, m = m, batch_input_shape = batch_input_shape, myDtype = myDtype)
+    model = create_model(alpha = alpha, gamma = gamma, Co = Co, m = m, batch_input_shape = batch_input_shape, myDtype = myDtype)
     results = model.predict_on_batch(input_array) # custumized layer prediction
     #--------------------------------------------------------------------------
-    fig  = plt.figure(1)
+    fig  = plt.figure(2)
     fig.clf()
     
     plt.plot(dK,danp,'ok', label = 'numpy')
@@ -106,3 +124,5 @@ if __name__ == "__main__":
     plt.legend(loc=0, facecolor = 'w')
     plt.grid(which = 'both')
     #--------------------------------------------------------------------------
+  
+    

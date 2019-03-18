@@ -252,11 +252,13 @@ class WalkerModel(Layer):
         `output = C*(inputs[:,0]**m)`
         where `C` and `m` are constants, and `C` is obtained from the following
         relation:
-            `C = Co/((1-inputs[:,1])**(m*(1-inputs[:,2]))))`
+            `C = Co/((1-inputs[:,1])**(m*(1-gamma))))`
             
             * input[:,0] is the nominal stress range
             * input[:,1] is the stress ratio, and
-            * input[:,2] is Walker's coefficient (its value depends on the stress ratio).        
+            
+            * sig is a custumized sigmoid function to calibrate Walker's coefficient (gamma)
+                  with respect to the stress ratio value.        
     """
     def __init__(self,
                  kernel_initializer = 'glorot_uniform',
@@ -272,7 +274,7 @@ class WalkerModel(Layer):
         
     def build(self, input_shape, **kwargs):
         self.kernel = self.add_weight("kernel",
-                                      shape = [2],
+                                      shape = [4],
                                       initializer = self.kernel_initializer,
                                       dtype = self.dtype,
                                       trainable = True,
@@ -280,8 +282,10 @@ class WalkerModel(Layer):
         self.built = True
 
     def call(self, inputs):
-        C = self.kernel[0]/((1-inputs[:,1])**(self.kernel[1]*(1-inputs[:,2])))
-        output = C*(inputs[:,0]**self.kernel[1])
+        sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
+        gamma = sig*self.kernel[1]
+        C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))
+        output = C*(inputs[:,0]**self.kernel[3])
         if(output.shape[0].value is not None):
             output = tf.reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
         return output
