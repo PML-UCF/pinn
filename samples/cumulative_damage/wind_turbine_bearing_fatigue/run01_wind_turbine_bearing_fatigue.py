@@ -45,6 +45,7 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from matplotlib import pyplot as plt
 
 from tensorflow.python.framework import ops
 
@@ -56,7 +57,7 @@ if __name__ == "__main__":
     myDtype = tf.float32
     
     a = -10/3                  # Slope of linearized SN-Curve in log10-log10 space
-    b = (10/3)*np.log10(6000)  # Interception of linearized SN-Curve in log10-log10 space
+    b = (10/3)*np.log10(6000)+np.log10(1e6)  # Interception of linearized SN-Curve in log10-log10 space
     d0RNN = 0.0
     
     # Inputs
@@ -66,16 +67,41 @@ if __name__ == "__main__":
     
     df = pd.read_csv('DynamicLoad.csv', index_col = None)
     df = df.dropna()
-    PFleet = np.transpose(np.log10(np.asarray(df)))
+    PFleet = np.transpose(np.asarray(df))
+    PFleetLog = np.log10(PFleet)
     nFleet, n10min = PFleet.shape
-    
-    inputArray = np.dstack((cycFleet, PFleet))
+       
+    inputArray = np.dstack((cycFleet, PFleetLog))
     selectCycle = [1]
     selectLoad = [2]
     batch_input_shape = inputArray.shape
     inputTensor = ops.convert_to_tensor(inputArray, dtype = myDtype)
     
     d0RNN = ops.convert_to_tensor(d0RNN * np.ones((inputArray.shape[0], 1)), dtype=myDtype)
-            
-    model = create_model(a, b, d0RNN, batch_input_shape, inputTensor, selectCycle, selectLoad, myDtype, return_sequences = True)
+    
+    # PINN Model
+    model = create_model(a, b, d0RNN, batch_input_shape, selectCycle, selectLoad, myDtype, return_sequences = True)
+    
     result = model.predict(inputArray)
+    
+    # Base Model
+    def deltaDamage(C,P,n):
+        L = 1e6*(C/P)**(10/3)
+        delDmg = n/L
+        return delDmg
+    
+    C = 6000
+    dmgCum = [[],[],[]]
+    dmg = np.zeros(nFleet)
+    for t in range(n10min):
+        dmg[0] +=  deltaDamage(C,PFleet[0][t],cycFleet[0][t])
+        dmgCum[0].append(dmg[0])
+        dmg[1] +=  deltaDamage(C,PFleet[1][t],cycFleet[1][t])
+        dmgCum[1].append(dmg[1])
+        dmg[2] +=  deltaDamage(C,PFleet[2][t],cycFleet[2][t])
+        dmgCum[2].append(dmg[2])
+
+    plt.plot(np.transpose(np.repeat(np.array([range(n10min)]),3,axis =0)),np.transpose(dmgCum),'-') 
+    plt.plot(np.transpose(np.repeat(np.array([range(n10min)]),3,axis =0)),np.transpose(result[:,:,0]),'--')
+    plt.legend(bbox_to_anchor=(0.0, 1.0), loc=2, borderaxespad=0.,labels = ('BaseMild','BaseNom','BaseAgro','PINNMild','PINNNom','PINNAgro'))
+    plt.show()

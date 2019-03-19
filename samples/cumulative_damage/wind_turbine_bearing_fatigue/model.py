@@ -56,10 +56,10 @@ from pinn.layers.physics import SNCurve
 from pinn.layers.core import inputsSelection
 
 # Model
-def create_model(a, b, d0RNN, batch_input_shape, input_array, selectCycle, selectLoad, myDtype, return_sequences = False, unroll = False):
+def create_model(a, b, d0RNN, batch_input_shape, selectCycle, selectLoad, myDtype, return_sequences = False, unroll = False):
     
     batch_adjusted_shape = (batch_input_shape[0], batch_input_shape[1], batch_input_shape[2]+1) #Adding state
-    placeHolder = Input(shape=(batch_input_shape[0],batch_input_shape[2]+1,)) #Adding state
+    placeHolder = Input(shape=(batch_input_shape[0], batch_input_shape[2]+1,)) #Adding state
     
     filterCycleLayer = inputsSelection(batch_adjusted_shape, selectCycle)(placeHolder)
     
