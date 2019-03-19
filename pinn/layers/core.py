@@ -61,6 +61,8 @@ from tensorflow.python.keras import constraints
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.ops import gen_math_ops
 
+from tensorflow import reshape, placeholder
+
 def getScalingDenseLayer(input_location, input_scale, dtype):
     input_location    = ops.convert_to_tensor(input_location, dtype=dtype)
     input_scale       = ops.convert_to_tensor(input_scale, dtype=dtype)
@@ -124,10 +126,13 @@ class SigmoidSelector(Layer):
         self.built = True
 
     def call(self, inputs):
-        sig = 1/(1+gen_math_ops.exp(-self.kernel[0]*(inputs[:,0]-self.kernel[1])))
-        output = sig*inputs[:,2]+(1-sig)*inputs[:,1]
-        if(output.shape[0].value is not None):
-            output = tf.reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        if inputs.shape[0].value is not None:
+            sig = 1/(1+gen_math_ops.exp(-self.kernel[0]*(inputs[:,0]-self.kernel[1])))
+            output = sig*inputs[:,2]+(1-sig)*inputs[:,1]
+            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        else:
+            output = placeholder(dtype=self.dtype,
+                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
         return output
 
     def compute_output_shape(self, input_shape):
