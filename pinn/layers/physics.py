@@ -124,7 +124,6 @@ class StressIntensityRange(Layer):
         else:
             output = placeholder(dtype=self.dtype,
                                  shape=tensor_shape.TensorShape([inputs.shape[0],1]))
-        
         # outputs should be (None, 1), so it is still rank = 2
         return output
     
@@ -237,7 +236,7 @@ class SNCurve(Layer):
         self.built = True
 
     def call(self, inputs):
-        output = 1/10**(self.kernel[0]*inputs[:,1]+self.kernel[1])
+        output = 1/10**(self.kernel[0]*inputs+self.kernel[1])
         if(output.shape[0].value is not None):
             output = tf.reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
         return output
@@ -282,12 +281,17 @@ class WalkerModel(Layer):
         self.built = True
 
     def call(self, inputs):
-        sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
-        gamma = sig*self.kernel[1]
-        C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))
-        output = C*(inputs[:,0]**self.kernel[3])
-        if(output.shape[0].value is not None):
-            output = tf.reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        if inputs.shape[0].value is not None:
+            sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
+            gamma = sig*self.kernel[1]
+            C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))
+        
+        
+            output = C*(inputs[:,0]**self.kernel[3])
+            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        else:
+            output = placeholder(dtype=self.dtype,
+                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
         return output
 
     def compute_output_shape(self, input_shape):

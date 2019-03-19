@@ -60,15 +60,14 @@ from pinn.layers.core import inputsSelection
 # Model
 def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array, selectdK, selectprop, myDtype, return_sequences = False, unroll = False):
     
-    batch_adjusted_shape = (batch_input_shape[0], batch_input_shape[1], batch_input_shape[2]+1) #Adding state
-    placeHolder = Input(shape=(batch_input_shape[0],batch_input_shape[2]+1,)) #Adding state
+    batch_adjusted_shape = (batch_input_shape[2]+1,) #Adding state
+    placeHolder = Input(shape=(batch_input_shape[2]+1,)) #Adding state
     
-    dk_filter_shape = (batch_input_shape[0],batch_input_shape[2]+1)
-    filterdkLayer = inputsSelection(dk_filter_shape, selectdK)(placeHolder)
+    filterdkLayer = inputsSelection(batch_adjusted_shape, selectdK)(placeHolder)
     
     filterdaLayer = inputsSelection(batch_adjusted_shape, selectprop)(placeHolder)
     
-    dk_input_shape = tensor_shape.TensorShape([2])
+    dk_input_shape = filterdkLayer.get_shape()
         
     dkLayer = StressIntensityRange(input_shape = dk_input_shape, dtype = myDtype)
     dkLayer.build(input_shape = dk_input_shape)
@@ -81,7 +80,7 @@ def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array,
     
     wmLayer = WalkerModel(input_shape = da_input_shape, dtype = myDtype)
     wmLayer.build(input_shape = da_input_shape)
-    wmLayer.set_weights([np.asarray([F], dtype = wmLayer.dtype)])
+    wmLayer.set_weights([np.asarray([alpha, gamma, Co, m], dtype = wmLayer.dtype)])
     wmLayer.trainable = False
     wmLayer = wmLayer(wmInput)
     

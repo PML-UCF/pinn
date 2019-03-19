@@ -58,15 +58,16 @@ if __name__ == "__main__":
     
     df = pd.read_csv('Propagation_loads_n_crack_length_data.csv', index_col = None) # loading required data
     dS = df['dS'].values # loads history for a given machine 
-    R = df['R'].values # stress ratio values for a given machine 
+    R = df['R'].values # stress ratio values for a given machine
+    a = df['a'].values
     
-    n = len(dS) # number of loads
+    nFleet, nCycles = 10, len(a) 
     
-    dS_fleet = np.repeat(dS,10) # simulating ten identical machines
-    dS_fleet = np.reshape(dS_fleet,(10,n))
-    
-    R_fleet = np.repeat(R,10) 
-    R_fleet = np.reshape(R_fleet,(10,n))
+    aFleet = np.repeat(a,nFleet) 
+    dS_fleet = np.repeat(dS,nFleet) 
+    dS_fleet = np.reshape(dS_fleet,(nFleet,nCycles))
+    R_fleet = np.repeat(R,nFleet) # simulating ten identical machines
+    R_fleet = np.reshape(R_fleet,(nFleet,nCycles))
     
     # RNN inputs
     input_array = np.dstack((dS_fleet, R_fleet))
