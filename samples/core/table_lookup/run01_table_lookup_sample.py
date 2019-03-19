@@ -46,6 +46,7 @@
 """
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 
 from tensorflow.python.keras.engine.base_layer import Layer
 
@@ -98,7 +99,7 @@ class tableInterpolation(Layer):
         
     def build(self, input_shape, **kwargs):
         self.grid = self.add_weight("grid",
-                                      shape = [3,3],
+                                      shape = input_shape,
                                       initializer = self.kernel_initializer,
                                       dtype = self.dtype,
                                       trainable = True,
@@ -126,27 +127,34 @@ class tableInterpolation(Layer):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1) 
 
-def create_model(grid_array, bounds, input_shape):
+def create_model(grid_array, bounds, input_shape, table_shape):
     dLInterpol = tableInterpolation(input_shape = input_shape)
-    dLInterpol.build(input_shape = input_shape)
+    dLInterpol.build(input_shape = table_shape)
     dLInterpol.set_weights([grid_array, bounds])
     model = tf.keras.Sequential()
     model.add(dLInterpol)
     return model
 
 myDtype = tf.float32
-data = np.asarray([[0,0,0],[1,2,3],[10,20,30]])
-space = np.asarray([[500,750,1000],[4,6,8]])
-bounds = np.asarray([[np.min(space[0]),np.max(space[0])],[np.min(space[1]),np.max(space[1])]])
+df = pd.read_csv('aSKF_kappa1.csv')
+data = np.asarray([[1,1,1],[2,2,2],[3,3,3]])
+#data = np.asarray([df['askf']])
+space = np.asarray([[500,750,1000],[1,1,1]])
+table_shape = data.shape
+
+if space.shape[0] == 2:
+    bounds = np.asarray([[np.min(space[0]),np.max(space[0])],[np.min(space[1]),np.max(space[1])]])
+elif space.shape[0] == 1:
+    bounds = np.asarray([[np.min(space[0]),np.max(space[0])]])
 #data = data[np.newaxis,:,:,np.newaxis]
 #grid = ops.convert_to_tensor(data,dtype=tf.float32)
-q = np.asarray([[600.0,5.0],[1.5,1.0],[2.0,2.0]])
+q = np.asarray([[625.0,1],[800.0,1],[999.0,5.0]])
 
 #q = q[np.newaxis,:,:]
 input_array = ops.convert_to_tensor(q,dtype=tf.float32)
 input_shape = input_array.shape
 input_array= tf.expand_dims(input_array,0)
 
-model = create_model(data, bounds, input_shape)
+model = create_model(data, bounds, input_shape, table_shape)
 result = model.predict(input_array, steps = 1)
 print(result)
