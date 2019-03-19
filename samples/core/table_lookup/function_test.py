@@ -39,10 +39,10 @@ res_resamp = sess.run(out_resamp)
 print(res_interp)
 #print(res_resamp)
 
-xval = np.linspace(0.02,5.0,1000)
+xval = np.linspace(0.02,2.0,1000)
 
-askf = 0.91671483*xval**6 - 5.64733622*xval**5 + 13.77524582*xval**4 - 10.90333088*xval**3 + 5.96065039*xval**2 + 0.99228844*xval + 0.15619915
-
-df = pd.DataFrame({'xval' : xval, 'askf' : askf})
-df.to_csv('aSKF_kappa1.csv', index = False)
+askf1 = 0.91671483*xval**6 - 5.64733622*xval**5 + 13.77524582*xval**4 - 10.90333088*xval**3 + 5.96065039*xval**2 + 0.99228844*xval + 0.15619915
+askf2 = -3.44087118*xval**6 + 16.88165841*xval**5 - 21.65996282*xval**4 + 21.05347464*xval**3 - 2.00964031*xval**2 + 3.31604608*xval + 0.14522919
+df = pd.DataFrame({'xval' : xval, 1 : askf1, 2 : askf2})
+df.to_csv('aSKF_kappa12.csv', index = False)
 
