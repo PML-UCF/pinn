@@ -126,7 +126,7 @@ if __name__ == "__main__":
     plt.plot(np.transpose(np.repeat([range(nCycles)],nFleet,axis=0)), np.transpose(results))
     
     plt.title('Damage History')
-    plt.xlabel('Cycles')
+    plt.xlabel('Million Cycles')
     plt.ylabel('Damage')
     plt.grid(which = 'both')
     plt.show()
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     plt.title('SN Curve')
     plt.xscale('log')
     plt.yscale('log')
-    plt.xlabel('Cycles')
+    plt.xlabel('Million Cycles')
     plt.ylabel('Load (kN)')
     plt.grid(which = 'both')
     plt.legend(loc=0, facecolor = 'w')
