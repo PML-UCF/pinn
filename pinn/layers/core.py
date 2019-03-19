@@ -41,7 +41,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # ==============================================================================
-
 """ Core PINN layers
 """
 from tensorflow.keras.layers import Dense
@@ -76,19 +75,21 @@ def getScalingDenseLayer(input_location, input_scale, dtype):
     dL.trainable = False
     return dL
 
-def inputsSelection(inputs, ndex):
-    input_mask = np.zeros([inputs.shape[-1], len(ndex)])
-    for i in range(inputs.shape[-1]):
-        for v in ndex:
-            if i == v:
-                input_mask[i,np.where(ndex == v)] = 1
-        
-    dL = Dense(len(ndex), activation = None, input_shape = inputs.shape, 
-               use_bias = False)
-    dL.build(input_shape = inputs.shape)
-    dL.set_weights([input_mask])
-    dL.trainable = False
-    return dL
+def inputsSelection(inputs_shape, ndex):
+   if not hasattr(ndex,'index'):
+       ndex = list(ndex)
+   input_mask = np.zeros([inputs_shape[-1], len(ndex)])
+   for i in range(inputs_shape[-1]):
+       for v in ndex:
+           if i == v:
+               input_mask[i,ndex.index(v)] = 1
+
+   dL = Dense(len(ndex), activation = None, input_shape = inputs_shape,
+              use_bias = False)
+   dL.build(input_shape = inputs_shape)
+   dL.set_weights([input_mask])
+   dL.trainable = False
+   return dL
 
 class SigmoidSelector(Layer):
     """ 
