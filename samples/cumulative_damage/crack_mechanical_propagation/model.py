@@ -46,7 +46,7 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Multiply
+from tensorflow.keras.layers import Input, Multiply, Concatenate, Lambda
 
 from tensorflow.python.framework import tensor_shape
 
@@ -75,7 +75,7 @@ def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array,
     dkLayer.trainable = False
     dkLayer = dkLayer(filterdkLayer)
     
-    wmInput = tf.stack([dkLayer,filterdaLayer],axis = 2)
+    wmInput = Concatenate(axis = -1)([dkLayer, filterdaLayer])
     da_input_shape = wmInput.get_shape()
     
     wmLayer = WalkerModel(input_shape = da_input_shape, dtype = myDtype)
@@ -91,8 +91,8 @@ def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array,
 #     Model_Input = Input(wmInput)
 #     functionalModel = Model(inputs = [Model_Input], outputs = [wmLayer])
 # =============================================================================
-    multiplyLayer = Multiply()([wmLayer, tf.constant([1], myDtype)])
-    functionalModel = Model(inputs = placeHolder, outputs = multiplyLayer)
+    multiplyLayer = Lambda(lambda x: x * 1.0)(wmLayer)
+    functionalModel = Model(inputs=[placeHolder], outputs=[multiplyLayer])
     "-------------------------------------------------------------------------"
     CDMCellHybrid = CumulativeDamageCell(model = functionalModel,
                                        batch_input_shape = batch_input_shape,
