@@ -51,7 +51,6 @@ from tensorflow.math import reciprocal
 
 import numpy as np
 
-import tensorflow as tf
 from tensorflow.python.keras.engine.base_layer import Layer
 
 from tensorflow.python.keras import initializers

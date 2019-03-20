@@ -86,12 +86,10 @@ class StressIntensityRange(Layer):
             activity_regularizer=regularizers.get(activity_regularizer), **kwargs)
             
         self.units = int(1)
-#        self.units = int(units)
         self.kernel_initializer = initializers.get(kernel_initializer)
         self.kernel_regularizer = regularizers.get(kernel_regularizer)
         self.kernel_constraint  = constraints.get(kernel_constraint)
         
-#        self.supports_masking = True
         self.input_spec = InputSpec(min_ndim=2)
         
     def build(self, input_shape):
@@ -151,12 +149,10 @@ class ParisLaw(Layer):
             activity_regularizer=regularizers.get(activity_regularizer), **kwargs)
             
         self.units = int(1)
-#        self.units = int(units)
         self.kernel_initializer = initializers.get(kernel_initializer)
         self.kernel_regularizer = regularizers.get(kernel_regularizer)
         self.kernel_constraint  = constraints.get(kernel_constraint)
         
-#        self.supports_masking = True
         self.input_spec = InputSpec(min_ndim=2)
         
     def build(self, input_shape):

@@ -46,9 +46,7 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Multiply, Concatenate, Lambda
-
-from tensorflow.python.framework import tensor_shape
+from tensorflow.keras.layers import Input, Concatenate, Lambda
 
 import sys
 sys.path.append('../../../')
@@ -83,14 +81,7 @@ def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array,
     wmLayer.set_weights([np.asarray([alpha, gamma, Co, m], dtype = wmLayer.dtype)])
     wmLayer.trainable = False
     wmLayer = wmLayer(wmInput)
-    
-# =============================================================================
-#     functionalModel = Model(inputs = [placeHolder], outputs = [wmLayer])
-# =============================================================================
-# =============================================================================
-#     Model_Input = Input(wmInput)
-#     functionalModel = Model(inputs = [Model_Input], outputs = [wmLayer])
-# =============================================================================
+
     multiplyLayer = Lambda(lambda x: x * 1.0)(wmLayer)
     functionalModel = Model(inputs=[placeHolder], outputs=[multiplyLayer])
     "-------------------------------------------------------------------------"

@@ -92,12 +92,12 @@ if __name__ == "__main__":
     fig  = plt.figure(1)
     fig.clf()
     
-    plt.plot(dS,1e3*df['a'].values,'ok', label = 'numpy')
-    plt.plot(dS,1e3*results,'sm', label = 'PINN')
+    plt.plot(1e3*df['a'].values,':k', label = 'numpy')
+    plt.plot(1e3*results[4,:,0],':m', label = 'PINN')
     
     
     plt.title('Mech. Propagation')
-    plt.xlabel('$\Delta$ S [MPa]')
+    plt.xlabel('Cycles')
     plt.ylabel('$\Delta$ a [mm]')
     plt.legend(loc=0, facecolor = 'w')
     plt.grid(which = 'both')
