@@ -59,21 +59,22 @@ if __name__ == "__main__":
     df = pd.read_csv('Propagation_loads_n_crack_length_data.csv', index_col = None) # loading required data
     dS = df['dS'].values # loads history for a given machine 
     R = df['R'].values # stress ratio values for a given machine
-    a = df['a'].values
+    a = df['a'].values # crack length values for a given machine
     
     nFleet, nCycles = 10, len(a) 
     
-    aFleet = np.repeat(a,nFleet) 
-    dS_fleet = np.repeat(dS,nFleet) 
-    dS_fleet = np.reshape(dS_fleet,(nFleet,nCycles))
+    dS_fleet = np.repeat(dS,nFleet) # simulating ten identical machines
+    dS_fleet = np.reshape(dS_fleet,(nCycles,nFleet))
+    dS_fleet = dS_fleet.transpose()
     R_fleet = np.repeat(R,nFleet) # simulating ten identical machines
-    R_fleet = np.reshape(R_fleet,(nFleet,nCycles))
+    R_fleet = np.reshape(R_fleet,(nCycles,nFleet))
+    R_fleet = R_fleet.transpose()
     
     # RNN inputs
     input_array = np.dstack((dS_fleet, R_fleet))
     inputTensor = ops.convert_to_tensor(input_array, dtype = myDtype)
     
-    a0RNN = 2e-3 # initial crack length
+    a0RNN = np.round(a[0],4) # initial crack length
     a0RNN = ops.convert_to_tensor(a0RNN * np.ones((input_array.shape[0], 1)), dtype=myDtype)
     
     # model parameters
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     fig  = plt.figure(1)
     fig.clf()
     
-    plt.plot(1e3*df['a'].values,':k', label = 'numpy')
+    plt.plot(1e3*a,':k', label = 'numpy')
     plt.plot(1e3*results[4,:,0],':m', label = 'PINN')
     
     
