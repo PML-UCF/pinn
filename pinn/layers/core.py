@@ -77,20 +77,20 @@ def getScalingDenseLayer(input_location, input_scale, dtype):
     return dL
 
 def inputsSelection(inputs_shape, ndex):
-   if not hasattr(ndex,'index'):
-       ndex = list(ndex)
-   input_mask = np.zeros([inputs_shape[-1], len(ndex)])
-   for i in range(inputs_shape[-1]):
-       for v in ndex:
-           if i == v:
-               input_mask[i,ndex.index(v)] = 1
-
-   dL = Dense(len(ndex), activation = None, input_shape = inputs_shape,
-              use_bias = False)
-   dL.build(input_shape = inputs_shape)
-   dL.set_weights([input_mask])
-   dL.trainable = False
-   return dL
+    if not hasattr(ndex,'index'):
+        ndex = list(ndex)
+    input_mask = np.zeros([inputs_shape[-1], len(ndex)])
+    for i in range(inputs_shape[-1]):
+        for v in ndex:
+            if i == v:
+                input_mask[i,ndex.index(v)] = 1
+        
+    dL = Dense(len(ndex), activation = None, input_shape = inputs_shape, 
+               use_bias = False)
+    dL.build(input_shape = inputs_shape)
+    dL.set_weights([input_mask])
+    dL.trainable = False
+    return dL
 
 class SigmoidSelector(Layer):
     """ 
@@ -136,4 +136,5 @@ class SigmoidSelector(Layer):
 
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
-        return aux_shape[:-1].concatenate(1) 
+        return aux_shape[:-1].concatenate(1)
+      

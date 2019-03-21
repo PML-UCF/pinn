@@ -91,7 +91,7 @@ if __name__ == "__main__":
     N = a*np.log10(macArray)+b # Number of cycles for corresponding load
     d = 1/10**N                # Delta damage
     do = 0                     # Initial damage
-    
+    ndex = [1]                 # To filter load from inputs
     #--------------------------------------------------------------------------
     # Sequence for damage history calculation
     dHistAll = []
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     # Prediction sequence
     da0RNN = ops.convert_to_tensor(do * np.ones((Sobs.shape[0], 1)), dtype=myDtype)
         
-    model = create_model(a = a, b = b, batch_input_shape = batch_input_shape, 
+    model = create_model(a = a, b = b, batch_input_shape = batch_input_shape, ndex = ndex,
                          da0RNN = da0RNN, myDtype = myDtype, return_sequences = True)
     
     results = model.predict_on_batch(Sobs)[:,:,0]
@@ -126,9 +126,10 @@ if __name__ == "__main__":
     plt.plot(np.transpose(np.repeat([range(nCycles)],nFleet,axis=0)), np.transpose(results))
     
     plt.title('Damage History')
-    plt.xlabel('Cycles')
+    plt.xlabel('Million Cycles')
     plt.ylabel('Damage')
     plt.grid(which = 'both')
+    plt.show()
     
     # Plot SN-Curve
     fig  = plt.figure(2)
@@ -140,7 +141,8 @@ if __name__ == "__main__":
     plt.title('SN Curve')
     plt.xscale('log')
     plt.yscale('log')
-    plt.xlabel('Cycles')
+    plt.xlabel('Million Cycles')
     plt.ylabel('Load (kN)')
     plt.grid(which = 'both')
     plt.legend(loc=0, facecolor = 'w')
+    plt.show()
