@@ -94,7 +94,7 @@ if __name__ == "__main__":
     fig.clf()
     
     plt.plot(1e3*a,':k', label = 'numpy')
-    plt.plot(1e3*results[4,:,0],':m', label = 'PINN')
+    plt.plot(1e3*results[0,:,0],':m', label = 'PINN')
     
     
     plt.title('Mech. Propagation')
