@@ -79,31 +79,31 @@ def sigmoid(dai,dap,a,alpha,ath):
 if __name__ == "__main__":
     myDtype = tf.float32  # defining type for the layer
     
-    df = pd.read_csv('Walker_init_Prop_data.csv', index_col = None) # loading required data
-    Seq = df['Seq'].values # Equivalent stress history for a given machine
-    dS = df['dS'].values # loads history for a given machine 
-    R = df['R'].values # stress ratio values for a given machine
-    cr = df['a'].values # crack length values for a given machine
+    dfSeq = pd.read_csv('Equiv_stress.csv', index_col = None) # Equivalent stress data
+    Seq = dfSeq.values[:,1:4] # Equivalent stress history for all machines
+    Seq = Seq.transpose() # setting axis as [# of machines, # of cycles]
+    dfdS = pd.read_csv('Delta_load.csv', index_col = None) # Load data
+    dS = dfdS.values[:,1:4] # loads history for all machines 
+    dS = dS.transpose()
+    dfR = pd.read_csv('Stress_ratio.csv', index_col = None) # Stress ratio data
+    R = dfR.values[:,1:4] # stress ratio values for all machines
+    R = R.transpose()
+    dfa = pd.read_csv('Crack_length.csv', index_col = None) # crack length data
+    cr = dfa.values[:,1:4] # crack length values for all machines
+    cr = cr.transpose()
     
-    nFleet, nCycles = 3, len(cr) 
-    
-    Seq_fleet = np.repeat(Seq,nFleet) # simulating n identical machines
-    Seq_fleet = np.reshape(Seq_fleet,(nCycles,nFleet))
-    Seq_fleet = Seq_fleet.transpose()
-    dS_fleet = np.repeat(dS,nFleet) # simulating n identical machines
-    dS_fleet = np.reshape(dS_fleet,(nCycles,nFleet))
-    dS_fleet = dS_fleet.transpose()
-    R_fleet = np.repeat(R,nFleet) # simulating n identical machines
-    R_fleet = np.reshape(R_fleet,(nCycles,nFleet))
-    R_fleet = R_fleet.transpose()
+    nFleet, nCycles  = np.shape(cr) 
     
     # RNN inputs
-    input_array = np.dstack((Seq_fleet, dS_fleet))
-    input_array = np.dstack((input_array, R_fleet))
+    input_array = np.dstack((Seq, dS))
+    input_array = np.dstack((input_array, R))
     inputTensor = ops.convert_to_tensor(input_array, dtype = myDtype)
     
-    a0RNN = cr[0] # initial crack length
-    a0RNN = ops.convert_to_tensor(a0RNN * np.ones((input_array.shape[0], 1)), dtype=myDtype)
+    a0RNN = np.zeros((input_array.shape[0], 1)) 
+    a0RNN[0] = cr[0,0] # initial crack length asset #1
+    a0RNN[1] = cr[1,0] # initial crack length asset #2
+    a0RNN[-1] = cr[-1,0] # initial crack length asset #3
+    a0RNN = ops.convert_to_tensor(a0RNN, dtype=myDtype)
     
     # model parameters
     a,b = -3.73,13.48261 # Sn curve coefficients 
@@ -124,28 +124,33 @@ if __name__ == "__main__":
     # =============================================================================
     # Numpy function     
     # =============================================================================
-    dai = np.zeros(nCycles)
-    dap = np.zeros(nCycles)
-    da = np.zeros(nCycles)
-    an = np.zeros(nCycles)
-    aux = 0
+    dai = np.zeros((nFleet,nCycles))
+    dap = np.zeros((nFleet,nCycles))
+    da = np.zeros((nFleet,nCycles))
+    an = np.zeros((nFleet,nCycles))
     print('Numpy results replication:')
-    for ii in tqdm(range(nCycles)):
-        dai[ii] = sncurve(Seq[ii],a,b)
-        dap[ii] = walker(dS[ii],F,R[ii],beta,gamma,Co,m,aux)
-        da[ii] = sigmoid(dai[ii],dap[ii],aux,alpha,ath)
-        aux+=da[ii]
-        an[ii] = aux
+    for ii in tqdm(range(nFleet)):
+        aux = 0
+        for jj in range(nCycles):
+            dai[ii,jj] = sncurve(Seq[ii,jj],a,b)
+            dap[ii,jj] = walker(dS[ii,jj],F,R[ii,jj],beta,gamma,Co,m,aux)
+            da[ii,jj] = sigmoid(dai[ii,jj],dap[ii,jj],aux,alpha,ath)
+            aux+=da[ii,jj]
+            an[ii,jj] = aux
         
     #--------------------------------------------------------------------------
     fig  = plt.figure(1)
     fig.clf()
     
-    plt.plot(1e3*cr,':k', label = 'data')
-    plt.plot(1e3*an,':m', label = 'numpy')
-    plt.plot(1e3*results[0,:,0],':', label = 'PINN#1')
-    plt.plot(1e3*results[1,:,0],'--', label = 'PINN#2')
-    plt.plot(1e3*results[-1,:,0],'-', label = 'PINN#3')
+    plt.plot(1e3*cr[0,:],':k', label = 'asset #1')
+    plt.plot(1e3*cr[1,:],'--m', label = 'asset #2')
+    plt.plot(1e3*cr[-1,:],'-g', label = 'asset #3')
+    plt.plot(1e3*an[0,:],'-', label = 'numpy #1')
+    plt.plot(1e3*an[0,:],':', label = 'numpy #2')
+    plt.plot(1e3*an[0,:],':', label = 'numpy #3')
+    plt.plot(1e3*results[0,:,0],':', label = 'PINN #1')
+    plt.plot(1e3*results[1,:,0],'--', label = 'PINN #2')
+    plt.plot(1e3*results[-1,:,0],'-', label = 'PINN #3')
     
     
     plt.title('Crack Init. and Prop.')
@@ -153,3 +158,4 @@ if __name__ == "__main__":
     plt.ylabel(' crack length [mm]')
     plt.legend(loc=0, facecolor = 'w')
     plt.grid(which = 'both')
+    
