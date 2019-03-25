@@ -52,12 +52,35 @@ import matplotlib.pyplot as plt
 from tensorflow.python.framework import ops
 
 from model import create_model
+from tqdm import tqdm
+# =============================================================================
+# auxiliary functions
+# =============================================================================
+def sncurve(Seq,a,b):
+    da = 1/10**(a*Seq+b)
+    return da
+
+def walker(dS,F,R,beta,gamma,Co,m,a):
+    dk = F*dS*np.sqrt(np.pi*a)    
+    sig = 1/(1+np.exp(beta*R))
+    gammav = sig*gamma
+    C = Co/((1-R)**(m*(1-gammav)))    
+    da = C*(dk**m)
+    return da
+
+def sigmoid(dai,dap,a,alpha,ath):
+    m = 1/(1+np.exp(-alpha*(a-ath)))
+    da = m*dap+(1-m)*dai
+    return da
+# =============================================================================
+# Main
+# =============================================================================
 #--------------------------------------------------------------------------
 if __name__ == "__main__":
     myDtype = tf.float32  # defining type for the layer
     
     df = pd.read_csv('Walker_init_Prop_data.csv', index_col = None) # loading required data
-    Seq = df['Seq'].values
+    Seq = df['Seq'].values # Equivalent stress history for a given machine
     dS = df['dS'].values # loads history for a given machine 
     R = df['R'].values # stress ratio values for a given machine
     cr = df['a'].values # crack length values for a given machine
@@ -79,7 +102,7 @@ if __name__ == "__main__":
     input_array = np.dstack((input_array, R_fleet))
     inputTensor = ops.convert_to_tensor(input_array, dtype = myDtype)
     
-    a0RNN = np.round(cr[0],4) # initial crack length
+    a0RNN = cr[0] # initial crack length
     a0RNN = ops.convert_to_tensor(a0RNN * np.ones((input_array.shape[0], 1)), dtype=myDtype)
     
     # model parameters
@@ -87,7 +110,7 @@ if __name__ == "__main__":
     F = 2.8 # stress intensity factor
     beta,gamma = -1e8,.68 # Walker model customized sigmoid function parameters
     Co,m = 1.1323e-10,3.859 # Walker model coefficients (similar to Paris law)
-    alpha,ath = 1e6,.5e-3 # sigmoid selector parameters
+    alpha,ath = 1e8,.5e-3 # sigmoid selector parameters
     #--------------------------------------------------------------------------
     batch_input_shape = input_array.shape
     
@@ -98,11 +121,28 @@ if __name__ == "__main__":
     
     model = create_model(a, b, F, beta, gamma, Co, m , alpha, ath, a0RNN, batch_input_shape, selectsn, selectdK, selectprop, selectsig, myDtype, return_sequences = True)
     results = model.predict_on_batch(input_array) # custumized layer prediction
+    # =============================================================================
+    # Numpy function     
+    # =============================================================================
+    dai = np.zeros(nCycles)
+    dap = np.zeros(nCycles)
+    da = np.zeros(nCycles)
+    an = np.zeros(nCycles)
+    aux = 0
+    print('Numpy results replication:')
+    for ii in tqdm(range(nCycles)):
+        dai[ii] = sncurve(Seq[ii],a,b)
+        dap[ii] = walker(dS[ii],F,R[ii],beta,gamma,Co,m,aux)
+        da[ii] = sigmoid(dai[ii],dap[ii],aux,alpha,ath)
+        aux+=da[ii]
+        an[ii] = aux
+        
     #--------------------------------------------------------------------------
     fig  = plt.figure(1)
     fig.clf()
     
     plt.plot(1e3*cr,':k', label = 'data')
+    plt.plot(1e3*an,':m', label = 'numpy')
     plt.plot(1e3*results[0,:,0],':', label = 'PINN#1')
     plt.plot(1e3*results[1,:,0],'--', label = 'PINN#2')
     plt.plot(1e3*results[-1,:,0],'-', label = 'PINN#3')
