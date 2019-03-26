@@ -58,6 +58,7 @@ from tensorflow.python.keras import regularizers
 from tensorflow.python.keras import constraints
 
 from tensorflow.python.framework import tensor_shape
+from tensorflow.python.framework import common_shapes
 
 from tensorflow.contrib.image.python.ops.dense_image_warp import _interpolate_bilinear as interpolate
 
@@ -100,6 +101,7 @@ class tableInterpolation(Layer):
             - If a 1-D table is to be used, it needs to be converted to a 2-D table (see file /samples/core/table_lookup/run01_table_lookup_sample.py)
             - Extrapolation is not supported (provide a table grid large enough for your case)
             - Class returns limit values in case of extrapolation attempt.
+            - Provided tables should be equally spaced.
     """
     def __init__(self,
                  kernel_initializer = 'glorot_uniform',
@@ -129,16 +131,16 @@ class tableInterpolation(Layer):
         self.built = True
 
     def call(self, inputs):
-        self.grid = tf.expand_dims(self.grid,0)
-        self.grid = tf.expand_dims(self.grid,-1)
+        self.grid = ops.convert_to_tensor(self.grid,dtype=tf.float32)
         self.bounds = ops.convert_to_tensor(self.bounds,dtype=tf.float32)
-        queryPointsX_ind = (tf.to_float(tf.shape(self.grid)[1])-tf.constant(1.0))*(tf.transpose(inputs[0])[0]-self.bounds[0][0])/(self.bounds[0][1]-self.bounds[0][0])
-        queryPointsV_ind = (tf.to_float(tf.shape(self.grid)[2])-tf.constant(1.0))*(tf.transpose(inputs[0])[1]-self.bounds[1][0])/(self.bounds[1][1]-self.bounds[1][0])
-        queryPoints_ind = tf.stack([queryPointsX_ind,queryPointsV_ind],1)
-        queryPoints_ind = tf.expand_dims(queryPoints_ind,0)
+        queryPoints_ind = ((tf.to_float(tf.shape(self.grid)[1:3]))-tf.constant(1.0))*(inputs-self.bounds[0])/(self.bounds[1]-self.bounds[0])
+        if common_shapes.rank(inputs) == 2:
+            queryPoints_ind = tf.expand_dims(queryPoints_ind,0)
         output = interpolate(self.grid, queryPoints_ind)
+        if common_shapes.rank(inputs) == 2:
+            output = tf.reshape(output,shape=[output.shape[1],output.shape[2]])
         return output
 
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
-        return aux_shape[:-1].concatenate(1) 
+        return aux_shape[:-1].concatenate(1)

@@ -55,32 +55,37 @@ sys.path.append('../../../')
 
 from pinn.layers.core import tableInterpolation
 
-# Model
-def create_model(grid_array, bounds, input_shape, table_shape):
-    dLInterpol = tableInterpolation(input_shape = input_shape)
-    dLInterpol.build(input_shape = table_shape)
-    dLInterpol.set_weights([grid_array, bounds])
-    model = tf.keras.Sequential()
-    model.add(dLInterpol)
-    return model
-
-# Input Table
-myDtype = tf.float32
-#df = pd.read_csv('aSKF_kappa1.csv') # 1 Dimensional Table (f(x) = y)
-df = pd.read_csv('aSKF_kappa12.csv') # 2 Dimensional Table (f(x1,x2) = y)
-data = np.transpose(np.asarray(np.transpose(df))[1:])
-if data.shape[1] == 1:
-    data = np.repeat(data,2,axis=1)
-space = np.asarray([np.asarray(df['xval']),np.asarray([float(i) for i in df.columns[1:]])])
-table_shape = (data.shape[0],2)
-bounds = np.asarray([[np.min(space[0]),np.max(space[0])],[np.min(space[1]),np.max(space[1])]])
-
-# Input Query Points
-q = np.asarray([[0.05,1.5],[0.1,1.0],[0.3,2.5],[2.0,2.0]])
-input_array = ops.convert_to_tensor(q,dtype=tf.float32)
-input_shape = input_array.shape
-input_array= tf.expand_dims(input_array,0)
-
-model = create_model(data, bounds, input_shape, table_shape)
-result = model.predict(input_array, steps = 1)
-print(result)
+if __name__ == "__main__":
+    
+    # Model
+    def create_model(grid_array, bounds, input_shape, table_shape):
+        dLInterpol = tableInterpolation(input_shape = input_shape)
+        dLInterpol.build(input_shape = table_shape)
+        dLInterpol.set_weights([grid_array, bounds])
+        model = tf.keras.Sequential()
+        model.add(dLInterpol)
+        return model
+    
+    # Input Table
+    myDtype = tf.float32
+    #df = pd.read_csv('aSKF_kappa1.csv') # 1 Dimensional Table (f(x) = y)
+    df = pd.read_csv('aSKF.csv') # 2 Dimensional Table (f(x1,x2) = y)
+    
+    data = np.transpose(np.asarray(np.transpose(df))[1:])
+    if data.shape[1] == 1:
+        data = np.repeat(data,2,axis=1)
+    data = np.expand_dims(data,0)
+    data = np.expand_dims(data,-1)
+    space = np.asarray([np.asarray(df['xval']),np.asarray([float(i) for i in df.columns[1:]])])
+    table_shape = data.shape
+    bounds = np.asarray([[np.min(space[0]),np.min(space[1])],[np.max(space[0]),np.max(space[1])]])
+    
+    # Input Query Points
+    q = np.asarray([[2.0,1.0],[1.0,0.9],[0.3,0.5]])
+    input_array = ops.convert_to_tensor(q,dtype=tf.float32)
+    input_shape = input_array.shape
+    input_array= tf.expand_dims(input_array,0)
+    
+    model = create_model(data, bounds, input_shape, table_shape)
+    result = model.predict(input_array, steps = 1)
+    print(result)
