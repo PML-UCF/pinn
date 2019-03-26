@@ -56,8 +56,9 @@ if __name__ == "__main__":
     # Preliminaries
     myDtype = tf.float32
     
+    a1 = 1.0
     a = -10/3                  # Slope of linearized SN-Curve in log10-log10 space
-    b = (10/3)*np.log10(6000)+np.log10(1e6)  # Interception of linearized SN-Curve in log10-log10 space
+    b = (10/3)*np.log10(6000)+np.log10(1e6)+np.log10(a1)  # Interception of linearized SN-Curve in log10-log10 space
     d0RNN = 0.0
     
     # Inputs
@@ -70,17 +71,55 @@ if __name__ == "__main__":
     PFleet = np.transpose(np.asarray(df))
     PFleetLog = np.log10(PFleet)
     nFleet, n10min = PFleet.shape
+    
+    df = pd.read_csv('BearingTemp.csv', index_col = None)
+    df = df.dropna()
+    BTempFleet = np.transpose(np.asarray(df))
        
-    inputArray = np.dstack((cycFleet, PFleetLog))
+    inputArray = np.dstack((cycFleet, PFleetLog, BTempFleet))
     selectCycle = [1]
     selectLoad = [2]
-    batch_input_shape = inputArray.shape
+    selectBTemp = [3]
+    
     inputTensor = ops.convert_to_tensor(inputArray, dtype = myDtype)
+    batch_input_shape = inputTensor.shape
     
     d0RNN = ops.convert_to_tensor(d0RNN * np.ones((inputArray.shape[0], 1)), dtype=myDtype)
     
+    Pu = 750
+    
+    df = pd.read_csv('aSKF.csv')
+    data_aSKF = np.transpose(np.asarray(np.transpose(df))[1:])
+    if data_aSKF.shape[1] == 1:
+        data_aSKF = np.repeat(data_aSKF,2,axis=1)
+    data_aSKF = np.expand_dims(data_aSKF,0)
+    data_aSKF = np.expand_dims(data_aSKF,-1)
+    space_aSKF = np.asarray([np.asarray(df['xval']),np.asarray([float(i) for i in df.columns[1:]])])
+    table_shape_aSKF = data_aSKF.shape
+    bounds_aSKF = np.asarray([[np.min(space_aSKF[0]),np.min(space_aSKF[1])],[np.max(space_aSKF[0]),np.max(space_aSKF[1])]])
+    
+    df = pd.read_csv('kappa_degraded.csv')
+    data_kappa = np.transpose(np.asarray(np.transpose(df))[1:])
+    if data_kappa.shape[1] == 1:
+        data_kappa = np.repeat(data_kappa,2,axis=1)
+    data_kappa = np.expand_dims(data_kappa,0)
+    data_kappa = np.expand_dims(data_kappa,-1)
+    space_kappa = np.asarray([np.asarray(df['btemp']),np.asarray([float(i) for i in df.columns[1:]])])
+    table_shape_kappa = data_kappa.shape
+    bounds_kappa = np.asarray([[np.min(space_kappa[0]),np.min(space_kappa[1])],[np.max(space_kappa[0]),np.max(space_kappa[1])]])
+    
+    df = pd.read_csv('etac_degraded.csv')
+    data_etac = np.transpose(np.asarray(np.transpose(df))[1:])
+    if data_etac.shape[1] == 1:
+        data_etac = np.repeat(data_etac,2,axis=1)
+    data_etac = np.expand_dims(data_etac,0)
+    data_etac = np.expand_dims(data_etac,-1)
+    space_etac = np.asarray([np.asarray(df['kappa']),np.asarray([float(i) for i in df.columns[1:]])])
+    table_shape_etac = data_etac.shape
+    bounds_etac = np.asarray([[np.min(space_etac[0]),np.min(space_etac[1])],[np.max(space_etac[0]),np.max(space_etac[1])]])
+    
     # PINN Model
-    model = create_model(a, b, d0RNN, batch_input_shape, selectCycle, selectLoad, myDtype, return_sequences = True)
+    model = create_model(a, b, Pu, data_aSKF, bounds_aSKF, table_shape_aSKF, data_kappa, bounds_kappa, table_shape_kappa, data_etac, bounds_etac, table_shape_etac, d0RNN, batch_input_shape, selectCycle, selectLoad, selectBTemp, myDtype, return_sequences = True)
     
     result = model.predict(inputArray)
     
@@ -105,3 +144,7 @@ if __name__ == "__main__":
     plt.plot(np.transpose(np.repeat(np.array([range(n10min)]),3,axis =0)),np.transpose(result[:,:,0]),'--')
     plt.legend(bbox_to_anchor=(0.0, 1.0), loc=2, borderaxespad=0.,labels = ('BaseMild','BaseNom','BaseAgro','PINNMild','PINNNom','PINNAgro'))
     plt.show()
+    
+    print("L2 Fatigue Lives")
+    print("Mild, Nominal, Agressive")
+    print(np.where(result[0] > 1)[0][0]/(6*24*365), np.where(result[1] > 1)[0][0]/(6*24*365), np.where(result[2] > 1)[0][0]/(6*24*365))
