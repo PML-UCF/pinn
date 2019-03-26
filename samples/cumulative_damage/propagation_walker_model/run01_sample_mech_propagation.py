@@ -55,27 +55,32 @@ from model import create_model
 #--------------------------------------------------------------------------
 if __name__ == "__main__":
     myDtype = tf.float32  # defining type for the layer
-    
-    df = pd.read_csv('Propagation_loads_n_crack_length_data.csv', index_col = None) # loading required data
-    dS = df['dS'].values # loads history for a given machine 
-    R = df['R'].values # stress ratio values for a given machine
-    a = df['a'].values # crack length values for a given machine
-    
-    nFleet, nCycles = 10, len(a) 
-    
-    dS_fleet = np.repeat(dS,nFleet) # simulating ten identical machines
-    dS_fleet = np.reshape(dS_fleet,(nCycles,nFleet))
-    dS_fleet = dS_fleet.transpose()
-    R_fleet = np.repeat(R,nFleet) # simulating ten identical machines
-    R_fleet = np.reshape(R_fleet,(nCycles,nFleet))
-    R_fleet = R_fleet.transpose()
+
+    dfa = pd.read_csv('Crack_length.csv', index_col = None) # crack length data
+    cr = dfa.values[:,1:4] # crack length values for all machines
+    cr = cr.transpose() # setting axis as [# of machines, # of cycles]
+    idex = np.where(cr[1,:]>.5e-3)[0][0] # index to split data into initiation - propagation stages
+    cr = cr[:,idex:-1]
+    dfdS = pd.read_csv('Delta_load.csv', index_col = None) # Load data
+    dS = dfdS.values[:,1:4] # loads history for all machines 
+    dS = dS.transpose() 
+    dS = dS[:,idex:-1]
+    dfR = pd.read_csv('Stress_ratio.csv', index_col = None) # Stress ratio data
+    R = dfR.values[:,1:4] # stress ratio values for all machines
+    R = R.transpose()
+    R = R[:,idex:-1]
+        
+    nFleet, nCycles  = np.shape(cr) 
     
     # RNN inputs
-    input_array = np.dstack((dS_fleet, R_fleet))
+    input_array = np.dstack((dS, R))
     inputTensor = ops.convert_to_tensor(input_array, dtype = myDtype)
     
-    a0RNN = np.round(a[0],4) # initial crack length
-    a0RNN = ops.convert_to_tensor(a0RNN * np.ones((input_array.shape[0], 1)), dtype=myDtype)
+    a0RNN = np.zeros((input_array.shape[0], 1)) 
+    a0RNN[0] = cr[0,0] # initial crack length asset #1
+    a0RNN[1] = cr[1,0] # initial crack length asset #2
+    a0RNN[-1] = cr[-1,0] # initial crack length asset #3
+    a0RNN = ops.convert_to_tensor(a0RNN, dtype=myDtype)
     
     # model parameters
     F = 2.8 # stress intensity factor
@@ -93,12 +98,16 @@ if __name__ == "__main__":
     fig  = plt.figure(1)
     fig.clf()
     
-    plt.plot(1e3*a,':k', label = 'numpy')
-    plt.plot(1e3*results[0,:,0],':m', label = 'PINN')
-    
-    
+    plt.plot(1e3*cr[0,:],':k', label = 'asset #1')
+    plt.plot(1e3*cr[1,:],'--m', label = 'asset #2')
+    plt.plot(1e3*cr[-1,:],'-g', label = 'asset #3')
+    plt.plot(1e3*results[0,:,0],':', label = 'PINN #1')
+    plt.plot(1e3*results[1,:,0],'--', label = 'PINN #2')
+    plt.plot(1e3*results[-1,:,0],'-', label = 'PINN #3')
+             
     plt.title('Mech. Propagation')
     plt.xlabel('Cycles')
     plt.ylabel('$\Delta$ a [mm]')
     plt.legend(loc=0, facecolor = 'w')
     plt.grid(which = 'both')
+    
