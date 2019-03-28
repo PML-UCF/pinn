@@ -53,13 +53,13 @@ from tensorflow.python.framework import ops
 import sys
 sys.path.append('../../../')
 
-from pinn.layers.core import tableInterpolation
+from pinn.layers.core import TableInterpolation
 
 if __name__ == "__main__":
     
     # Model
     def create_model(grid_array, bounds, input_shape, table_shape):
-        dLInterpol = tableInterpolation(input_shape = input_shape)
+        dLInterpol = TableInterpolation(input_shape = input_shape)
         dLInterpol.build(input_shape = table_shape)
         dLInterpol.set_weights([grid_array, bounds])
         model = tf.keras.Sequential()
