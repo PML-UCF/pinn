@@ -59,7 +59,7 @@ if __name__ == "__main__":
             data = np.repeat(data,2,axis=1)
         data = np.expand_dims(data,0)
         data = np.expand_dims(data,-1)
-        space = np.asarray([np.asarray(df.iloc[:,0]),np.asarray([float(i) for i in table.columns[1:]])])
+        space = np.asarray([np.asarray(table.iloc[:,0]),np.asarray([float(i) for i in table.columns[1:]])])
         table_shape = data.shape
         bounds = np.asarray([[np.min(space[0]),np.min(space[1])],[np.max(space[0]),np.max(space[1])]])
         return {'data':data, 'bounds':bounds, 'table_shape':table_shape}
