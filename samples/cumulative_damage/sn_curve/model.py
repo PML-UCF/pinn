@@ -52,16 +52,23 @@ import sys
 sys.path.append('../../')
 from pinn.layers import CumulativeDamageCell
 from pinn.layers.physics import SNCurve
+from pinn.layers.core import inputsSelection
 
-def create_model(a, b, batch_input_shape, da0RNN, myDtype, return_sequences = False, unroll = False):
+def create_model(a, b, batch_input_shape, da0RNN, ndex, myDtype, return_sequences = False, unroll = False):
+    
+    batch_adjusted_shape = (batch_input_shape[0], batch_input_shape[1], batch_input_shape[2]+1)
+    dLSelction = inputsSelection(batch_adjusted_shape, ndex)
+    
     n = batch_input_shape[0]
     da_input_shape = (n,2)
+    
     daLayer = SNCurve(input_shape = da_input_shape, dtype = myDtype)
     daLayer.build(input_shape = da_input_shape)
     daLayer.set_weights([np.asarray([a,b], dtype = daLayer.dtype)])
     daLayer.trainable = False
     
     PINN = tf.keras.Sequential()
+    PINN.add(dLSelction)
     PINN.add(daLayer)
     "-------------------------------------------------------------------------"
     CDMCell = CumulativeDamageCell(model = PINN,

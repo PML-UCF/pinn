@@ -41,10 +41,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # ==============================================================================
-
 """ Core PINN layers
 """
-
 from tensorflow.keras.layers import Dense
 from tensorflow.python.framework import ops
 
@@ -62,8 +60,12 @@ from tensorflow.python.framework import common_shapes
 
 from tensorflow.contrib.image.python.ops.dense_image_warp import _interpolate_bilinear as interpolate
 
+from tensorflow.python.framework import tensor_shape
+from tensorflow.python.ops import gen_math_ops
+
+from tensorflow import reshape, placeholder, float32, to_float, shape, constant, expand_dims
+
 import numpy as np
-import tensorflow as tf
 
 def getScalingDenseLayer(input_location, input_scale, dtype):
     input_location    = ops.convert_to_tensor(input_location, dtype=dtype)
@@ -79,20 +81,68 @@ def getScalingDenseLayer(input_location, input_scale, dtype):
     dL.trainable = False
     return dL
 
-def inputsSelection(inputs, ndex):
-    input_mask = np.zeros([inputs.shape[-1], len(ndex)])
-    for i in range(inputs.shape[-1]):
+def inputsSelection(inputs_shape, ndex):
+    if not hasattr(ndex,'index'):
+        ndex = list(ndex)
+    input_mask = np.zeros([inputs_shape[-1], len(ndex)])
+    for i in range(inputs_shape[-1]):
         for v in ndex:
             if i == v:
-                input_mask[i,np.where(ndex == v)] = 1
+                input_mask[i,ndex.index(v)] = 1
         
-    dL = Dense(len(ndex), activation = None, input_shape = inputs.shape, 
+    dL = Dense(len(ndex), activation = None, input_shape = inputs_shape, 
                use_bias = False)
-    dL.build(input_shape = inputs.shape)
+    dL.build(input_shape = inputs_shape)
     dL.set_weights([input_mask])
     dL.trainable = False
     return dL
  
+class SigmoidSelector(Layer):
+    """ 
+        `output = sig*inputs[:,2]+(1-sig)*inputs[:,1]`
+        where:
+            * `sig` is the response of the sigmoid function used to filter between 
+                    initiation and propagation mechanisms,
+            * inputs[:,0] is current crack length of the previous time step,
+            * inputs[:,1] is crack length variation for the initiation stage,
+            * inputs[:,2] is crack length variation for the propagation stage,
+            * output is the overall crack length variation         
+    """
+    def __init__(self,
+                 kernel_initializer = 'glorot_uniform',
+                 kernel_regularizer=None,
+                 kernel_constraint=None,
+                 **kwargs):
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(SigmoidSelector, self).__init__(**kwargs)
+        self.kernel_initializer = initializers.get(kernel_initializer)
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.kernel_constraint  = constraints.get(kernel_constraint)
+        
+    def build(self, input_shape, **kwargs):
+        self.kernel = self.add_weight("kernel",
+                                      shape = [2],
+                                      initializer = self.kernel_initializer,
+                                      dtype = self.dtype,
+                                      trainable = True,
+                                      **kwargs)
+        self.built = True
+
+    def call(self, inputs):
+        if inputs.shape[0].value is not None:
+            sig = 1/(1+gen_math_ops.exp(-self.kernel[0]*(inputs[:,0]-self.kernel[1])))
+            output = sig*inputs[:,2]+(1-sig)*inputs[:,1]
+            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
+        else:
+            output = placeholder(dtype=self.dtype,
+                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
+        return output
+
+    def compute_output_shape(self, input_shape):
+        aux_shape = tensor_shape.TensorShape((None,1))
+return aux_shape[:-1].concatenate(1)
+
 class TableInterpolation(Layer):
     """ Table lookup and interpolation implementation.
         Interrogates provided query points using provided table and outputs the interpolation result.
@@ -110,7 +160,7 @@ class TableInterpolation(Layer):
                  **kwargs):
         if 'input_shape' not in kwargs and 'input_dim' in kwargs:
             kwargs['input_shape'] = (kwargs.pop('input_dim'),)
-        super(tableInterpolation, self).__init__(**kwargs)
+        super(TableInterpolation, self).__init__(**kwargs)
         self.kernel_initializer = initializers.get(kernel_initializer)
         self.kernel_regularizer = regularizers.get(kernel_regularizer)
         self.kernel_constraint  = constraints.get(kernel_constraint)
@@ -131,16 +181,16 @@ class TableInterpolation(Layer):
         self.built = True
 
     def call(self, inputs):
-        self.grid = ops.convert_to_tensor(self.grid,dtype=tf.float32)
-        self.bounds = ops.convert_to_tensor(self.bounds,dtype=tf.float32)
-        queryPoints_ind = ((tf.to_float(tf.shape(self.grid)[1:3]))-tf.constant(1.0))*(inputs-self.bounds[0])/(self.bounds[1]-self.bounds[0])
+        self.grid = ops.convert_to_tensor(self.grid,dtype=float32)
+        self.bounds = ops.convert_to_tensor(self.bounds,dtype=float32)
+        queryPoints_ind = ((to_float(shape(self.grid)[1:3]))-constant(1.0))*(inputs-self.bounds[0])/(self.bounds[1]-self.bounds[0])
         if common_shapes.rank(inputs) == 2:
-            queryPoints_ind = tf.expand_dims(queryPoints_ind,0)
+            queryPoints_ind = expand_dims(queryPoints_ind,0)
         output = interpolate(self.grid, queryPoints_ind)
         if common_shapes.rank(inputs) == 2:
-            output = tf.reshape(output,shape=[output.shape[1],output.shape[2]])
+            output = reshape(output,shape=[output.shape[1],output.shape[2]])
         return output
 
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
-        return aux_shape[:-1].concatenate(1)
+return aux_shape[:-1].concatenate(1)
