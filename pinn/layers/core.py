@@ -44,26 +44,27 @@
 """ Core PINN layers
 """
 from tensorflow.keras.layers import Dense
-from tensorflow.python.framework import ops
 
 from tensorflow.linalg import diag as tfDiag
 from tensorflow.math import reciprocal
-
-from tensorflow.python.keras.engine.base_layer import Layer
 
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 from tensorflow.python.keras import constraints
 
+from tensorflow.python.keras.engine.base_layer import Layer
+
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import common_shapes
+from tensorflow.python.framework import ops
+
+from tensorflow.python.ops import gen_math_ops
 
 from tensorflow.contrib.image.python.ops.dense_image_warp import _interpolate_bilinear as interpolate
 
-from tensorflow.python.framework import tensor_shape
-from tensorflow.python.ops import gen_math_ops
-
-from tensorflow import reshape, placeholder, float32, to_float, shape, constant, expand_dims
+from tensorflow import reshape, shape, expand_dims
+from tensorflow import float32, to_float
+from tensorflow import placeholder, constant
 
 import numpy as np
 
@@ -141,7 +142,8 @@ class SigmoidSelector(Layer):
 
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
-return aux_shape[:-1].concatenate(1)
+        
+        return aux_shape[:-1].concatenate(1)
 
 class TableInterpolation(Layer):
     """ Table lookup and interpolation implementation.
@@ -193,4 +195,5 @@ class TableInterpolation(Layer):
 
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
-return aux_shape[:-1].concatenate(1)
+        
+        return aux_shape[:-1].concatenate(1)
