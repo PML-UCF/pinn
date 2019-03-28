@@ -93,7 +93,7 @@ def inputsSelection(inputs, ndex):
     dL.trainable = False
     return dL
  
-class tableInterpolation(Layer):
+class TableInterpolation(Layer):
     """ Table lookup and interpolation implementation.
         Interrogates provided query points using provided table and outputs the interpolation result.
         Remarks on this class:
