@@ -46,15 +46,14 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Multiply, Lambda, Concatenate, Reshape
-from tensorflow.python.framework import tensor_shape
+from tensorflow.keras.layers import Input, Multiply, Lambda, Concatenate
 
 import sys
 sys.path.append('../../../')
 
 from pinn.layers import CumulativeDamageCell
 from pinn.layers.physics import SNCurve
-from pinn.layers.core import inputsSelection, tableInterpolation
+from pinn.layers.core import inputsSelection, TableInterpolation
 
 # Model
 def create_model(a, b, Pu, grid_array_aSKF, bounds_aSKF, table_shape_aSKF, grid_array_kappa, bounds_kappa, table_shape_kappa, grid_array_etac, bounds_etac, table_shape_etac, d0RNN, batch_input_shape, selectCycle, selectLoad, selectBTemp, myDtype, return_sequences = False, unroll = False):
@@ -70,7 +69,7 @@ def create_model(a, b, Pu, grid_array_aSKF, bounds_aSKF, table_shape_aSKF, grid_
     
     kappaXvalLayer = Concatenate(axis = -1)([filterBTempLayer,filterBTempLayer])
     
-    kappaLayer = tableInterpolation(input_shape = kappaXvalLayer.shape)
+    kappaLayer = TableInterpolation(input_shape = kappaXvalLayer.shape)
     kappaLayer.build(input_shape = table_shape_kappa)
     kappaLayer.set_weights([grid_array_kappa, bounds_kappa])
     kappaLayer.trainable = False
@@ -78,7 +77,7 @@ def create_model(a, b, Pu, grid_array_aSKF, bounds_aSKF, table_shape_aSKF, grid_
     
     etacXvalLayer = Concatenate(axis = -1)([kappaLayer,kappaLayer])
     
-    etacLayer = tableInterpolation(input_shape = etacXvalLayer.shape)
+    etacLayer = TableInterpolation(input_shape = etacXvalLayer.shape)
     etacLayer.build(input_shape = table_shape_etac)
     etacLayer.set_weights([grid_array_etac, bounds_etac])
     etacLayer.trainable = False
@@ -88,8 +87,7 @@ def create_model(a, b, Pu, grid_array_aSKF, bounds_aSKF, table_shape_aSKF, grid_
     xvalLayer2 = Lambda(lambda x: 1/(10**x))(filterLoadLayer)
     xvalLayer = Multiply()([xvalLayer1, xvalLayer2])
     
-    n = batch_input_shape[0]
-    sn_input_shape = (n, batch_input_shape[2])
+    sn_input_shape = (batch_input_shape[0], batch_input_shape[2])
     
     SNLayer = SNCurve(input_shape = sn_input_shape, dtype = myDtype)
     SNLayer.build(input_shape = sn_input_shape)
@@ -101,7 +99,7 @@ def create_model(a, b, Pu, grid_array_aSKF, bounds_aSKF, table_shape_aSKF, grid_
 
     xvalLayer = Concatenate(axis = -1)([xvalLayer,kappaLayer])
     
-    aSKFLayer = tableInterpolation(input_shape = xvalLayer.shape)
+    aSKFLayer = TableInterpolation(input_shape = xvalLayer.shape)
     aSKFLayer.build(input_shape = table_shape_aSKF)
     aSKFLayer.set_weights([grid_array_aSKF, bounds_aSKF])
     aSKFLayer.trainable = False
