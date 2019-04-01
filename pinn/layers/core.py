@@ -68,15 +68,13 @@ from tensorflow import placeholder, constant
 
 import numpy as np
 
-def getScalingDenseLayer(input_location, input_scale, dtype):
-    input_location    = ops.convert_to_tensor(input_location, dtype=dtype)
-    input_scale       = ops.convert_to_tensor(input_scale, dtype=dtype)
-    recip_input_scale = reciprocal(input_scale)
+def getScalingDenseLayer(input_location, input_scale):
+    recip_input_scale = np.reciprocal(input_scale)
     
-    waux = tfDiag(recip_input_scale)
+    waux = np.diag(recip_input_scale)
     baux = -input_location*recip_input_scale
     
-    dL = Dense(input_location.get_shape()[0], activation = None, input_shape = input_location.shape)
+    dL = Dense(input_location.shape[0], activation = None, input_shape = input_location.shape)
     dL.build(input_shape = input_location.shape)
     dL.set_weights([waux, baux])
     dL.trainable = False
