@@ -51,9 +51,6 @@ from tensorflow.python.framework import ops
 import numpy as np
 import pandas as pd
 
-import sys
-sys.path.append('../../../')
-
 from model import create_model
 
 

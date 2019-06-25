@@ -54,8 +54,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as matplotlib
 
-import sys
-sys.path.append('../../../')
 
 from model import create_model
 
