@@ -60,11 +60,14 @@ from tensorflow.python.framework import ops
 
 from tensorflow.python.ops import gen_math_ops
 
-from tensorflow.contrib.image.python.ops.dense_image_warp import _interpolate_bilinear as interpolate
+#TODO: Addept to tf2 
+#from tensorflow.contrib.image.python.ops.dense_image_warp import _interpolate_bilinear as interpolate
 
-from tensorflow import reshape, shape, expand_dims
-from tensorflow import float32, to_float
-from tensorflow import placeholder, constant
+from tensorflow import reshape, shape, expand_dims, constant
+
+#TODO: Addept to tf2
+from tensorflow.compat.v1 import float32, to_float
+from tensorflow.compat.v1 import placeholder
 
 import numpy as np
 
