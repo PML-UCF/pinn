@@ -51,9 +51,6 @@ from tensorflow.python.framework import ops
 import numpy as np
 import pandas as pd
 
-import sys
-sys.path.append('../../../')
-
 from model import create_model
 
 
@@ -113,7 +110,7 @@ if __name__ == "__main__":
     weight_path = jmdDir + "/cp.ckpt"
     ModelCheckpoint = tf.keras.callbacks.ModelCheckpoint(filepath = weight_path, monitor = 'loss',
                                                     verbose = 1, save_best_only = True,
-                                                    mode = 'min', save_weights_only = False)
+                                                    mode = 'min', save_weights_only = True)
     
     CSVLogger = tf.keras.callbacks.CSVLogger(filename = jmdDir + "/training.log", append = False)
     

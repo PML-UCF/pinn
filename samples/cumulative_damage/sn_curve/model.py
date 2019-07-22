@@ -48,17 +48,15 @@
 import numpy as np
 import tensorflow as tf
 
-import sys
-sys.path.append('../../')
 from pinn.layers import CumulativeDamageCell
 from pinn.layers.physics import SNCurve
 from pinn.layers.core import inputsSelection
 
 def create_model(a, b, batch_input_shape, da0RNN, ndex, myDtype, return_sequences = False, unroll = False):
-    
+
     batch_adjusted_shape = (batch_input_shape[0], batch_input_shape[1], batch_input_shape[2]+1)
     dLSelction = inputsSelection(batch_adjusted_shape, ndex)
-    
+
     n = batch_input_shape[0]
     da_input_shape = (n,2)
     
@@ -66,7 +64,7 @@ def create_model(a, b, batch_input_shape, da0RNN, ndex, myDtype, return_sequence
     daLayer.build(input_shape = da_input_shape)
     daLayer.set_weights([np.asarray([a,b], dtype = daLayer.dtype)])
     daLayer.trainable = False
-    
+
     PINN = tf.keras.Sequential()
     PINN.add(dLSelction)
     PINN.add(daLayer)
@@ -75,7 +73,7 @@ def create_model(a, b, batch_input_shape, da0RNN, ndex, myDtype, return_sequence
                                        batch_input_shape = batch_input_shape,
                                        dtype = myDtype,
                                        initial_damage = da0RNN)
-    
+
     CDMRNN = tf.keras.layers.RNN(cell = CDMCell,
                                        return_sequences = return_sequences,
                                        return_state = False,
@@ -84,7 +82,7 @@ def create_model(a, b, batch_input_shape, da0RNN, ndex, myDtype, return_sequence
     "-------------------------------------------------------------------------"
     model = tf.keras.Sequential()
     model.add(CDMRNN)
-    
+
     model.compile(loss='mse', optimizer=tf.keras.optimizers.RMSprop(1e-12), metrics=['mae'])
     
     return model
