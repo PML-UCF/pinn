@@ -50,7 +50,9 @@ import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
 
-from tensorflow import reshape, placeholder
+
+#TODO: addept to tf2
+from tensorflow.compat.v1 import reshape, placeholder
 
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
