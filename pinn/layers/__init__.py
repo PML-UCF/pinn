@@ -45,7 +45,10 @@
 """ PINN layers
 """
 
+from .util import interpolate
+
 from .core import getScalingDenseLayer
+from .core import TableInterpolation
 
 from .physics import StressIntensityRange
 from .physics import ParisLaw
@@ -55,3 +58,4 @@ from .rnn import CumulativeDamageCell
 del physics
 del rnn
 del core
+del util
