@@ -49,9 +49,6 @@ import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
 
-TODO: addept to tf2
-from tensorflow.compat.v1 import placeholder
-
 from tensorflow import reshape
 
 from tensorflow.python.keras import initializers
@@ -238,19 +235,18 @@ class WalkerModel(Layer):
         self.built = True
 
     def call(self, inputs):
-        if inputs.shape[0].value is not None:
-            sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
-            gamma = sig*self.kernel[1]
-            C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))
-        
-        
-            output = C*(inputs[:,0]**self.kernel[3])
-            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
-        else:
-            output = placeholder(dtype=self.dtype,
-                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
+        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
+        rank = common_shapes.rank(inputs)
+        if rank is not 2:
+            raise ValueError('`WalkerModel` only takes "rank 2" inputs.')
+        sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
+        gamma = sig*self.kernel[1]
+        C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))
+    
+    
+        output = C*(inputs[:,0]**self.kernel[3])
         return output
-
+    
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
-        return aux_shape[:-1].concatenate(1) 
+        return aux_shape[:-1].concatenate(1)

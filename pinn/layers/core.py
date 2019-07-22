@@ -67,7 +67,6 @@ from tensorflow import reshape, shape, expand_dims, constant
 
 #TODO: Addept to tf2
 from tensorflow.compat.v1 import float32, to_float
-from tensorflow.compat.v1 import placeholder
 
 import numpy as np
 
@@ -130,15 +129,14 @@ class SigmoidSelector(Layer):
                                       trainable = True,
                                       **kwargs)
         self.built = True
-
+        
     def call(self, inputs):
-        if inputs.shape[0].value is not None:
-            sig = 1/(1+gen_math_ops.exp(-self.kernel[0]*(inputs[:,0]-self.kernel[1])))
-            output = sig*inputs[:,2]+(1-sig)*inputs[:,1]
-            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
-        else:
-            output = placeholder(dtype=self.dtype,
-                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
+        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
+        rank = common_shapes.rank(inputs)
+        if rank is not 2:
+            raise ValueError('`SigmoidSelector` only takes "rank 2" inputs.')
+        sig = 1/(1+gen_math_ops.exp(-self.kernel[0]*(inputs[:,0]-self.kernel[1])))
+        output = sig*inputs[:,2]+(1-sig)*inputs[:,1]
         return output
 
     def compute_output_shape(self, input_shape):

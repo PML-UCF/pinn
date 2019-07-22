@@ -48,13 +48,8 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Concatenate, Lambda
 
-import sys
-sys.path.append('../../../')
-
-from pinn.layers import CumulativeDamageCell
-from pinn.layers.physics import StressIntensityRange, WalkerModel
-from pinn.layers.core import inputsSelection
-
+from pinn.layers import inputsSelection, CumulativeDamageCell
+from pinn.layers import StressIntensityRange, WalkerModel
 # Model
 def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array, selectdK, selectprop, myDtype, return_sequences = False, unroll = False):
     
