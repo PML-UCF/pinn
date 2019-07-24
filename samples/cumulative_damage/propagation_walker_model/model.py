@@ -46,7 +46,7 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Concatenate, Lambda
+from tensorflow.keras.layers import Input, Lambda, Concatenate
 
 from pinn.layers import inputsSelection, CumulativeDamageCell
 from pinn.layers import StressIntensityRange, WalkerModel
@@ -69,10 +69,10 @@ def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array,
     dkLayer = dkLayer(filterdkLayer)
     
     wmInput = Concatenate(axis = -1)([dkLayer, filterdaLayer])
-    da_input_shape = wmInput.get_shape()
+    wm_input_shape = wmInput.get_shape()
     
-    wmLayer = WalkerModel(input_shape = da_input_shape, dtype = myDtype)
-    wmLayer.build(input_shape = da_input_shape)
+    wmLayer = WalkerModel(input_shape = wm_input_shape, dtype = myDtype)
+    wmLayer.build(input_shape = wm_input_shape)
     wmLayer.set_weights([np.asarray([alpha, gamma, Co, m], dtype = wmLayer.dtype)])
     wmLayer.trainable = False
     wmLayer = wmLayer(wmInput)
