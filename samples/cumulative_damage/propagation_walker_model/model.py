@@ -46,17 +46,12 @@ import numpy as np
 import tensorflow as tf
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Concatenate, Lambda
+from tensorflow.keras.layers import Input, Concatenate
 
-import sys
-sys.path.append('../../../')
-
-from pinn.layers import CumulativeDamageCell
-from pinn.layers.physics import StressIntensityRange, WalkerModel
-from pinn.layers.core import inputsSelection
-
+from pinn.layers import inputsSelection, CumulativeDamageCell
+from pinn.layers import StressIntensityRange, WalkerModel
 # Model
-def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array, selectdK, selectprop, myDtype, return_sequences = False, unroll = False):
+def create_model(F, alpha, gamma, C0, m , d0RNN, batch_input_shape, input_array, selectdK, selectprop, myDtype, return_sequences = False, unroll = False):
     
     batch_adjusted_shape = (batch_input_shape[2]+1,) #Adding state
     placeHolder = Input(shape=(batch_input_shape[2]+1,)) #Adding state
@@ -74,16 +69,15 @@ def create_model(F, alpha, gamma, Co, m , d0RNN, batch_input_shape, input_array,
     dkLayer = dkLayer(filterdkLayer)
     
     wmInput = Concatenate(axis = -1)([dkLayer, filterdaLayer])
-    da_input_shape = wmInput.get_shape()
+    wm_input_shape = wmInput.get_shape()
     
-    wmLayer = WalkerModel(input_shape = da_input_shape, dtype = myDtype)
-    wmLayer.build(input_shape = da_input_shape)
-    wmLayer.set_weights([np.asarray([alpha, gamma, Co, m], dtype = wmLayer.dtype)])
+    wmLayer = WalkerModel(input_shape = wm_input_shape, dtype = myDtype)
+    wmLayer.build(input_shape = wm_input_shape)
+    wmLayer.set_weights([np.asarray([alpha, gamma, C0, m], dtype = wmLayer.dtype)])
     wmLayer.trainable = False
     wmLayer = wmLayer(wmInput)
 
-    multiplyLayer = Lambda(lambda x: x * 1.0)(wmLayer)
-    functionalModel = Model(inputs=[placeHolder], outputs=[multiplyLayer])
+    functionalModel = Model(inputs=[placeHolder], outputs=[wmLayer])
     "-------------------------------------------------------------------------"
     CDMCellHybrid = CumulativeDamageCell(model = functionalModel,
                                        batch_input_shape = batch_input_shape,
