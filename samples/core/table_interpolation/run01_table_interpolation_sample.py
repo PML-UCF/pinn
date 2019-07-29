@@ -48,44 +48,43 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 
-from tensorflow.python.framework import ops
-
-import sys
-sys.path.append('../../../')
-
-from pinn.layers.core import TableInterpolation
+from pinn.layers import TableInterpolation
 
 if __name__ == "__main__":
     
     # Model
     def create_model(grid_array, bounds, input_shape, table_shape):
-        dLInterpol = TableInterpolation(input_shape = input_shape)
-        dLInterpol.build(input_shape = table_shape)
-        dLInterpol.set_weights([grid_array, bounds])
+        
         model = tf.keras.Sequential()
+        dLInterpol = TableInterpolation(table_shape = table_shape)
+        dLInterpol.build(input_shape)
+        dLInterpol.set_weights([grid_array, bounds])
         model.add(dLInterpol)
+               
         return model
     
-    # Input Table
-    myDtype = tf.float32
+    # Input table manipulation
     #df = pd.read_csv('aSKF_kappa1.csv') # 1 Dimensional Table (f(x) = y)
     df = pd.read_csv('aSKF.csv') # 2 Dimensional Table (f(x1,x2) = y)
     
-    data = np.transpose(np.asarray(np.transpose(df))[1:])
-    if data.shape[1] == 1:
-        data = np.repeat(data,2,axis=1)
-    data = np.expand_dims(data,0)
-    data = np.expand_dims(data,-1)
-    space = np.asarray([np.asarray(df['xval']),np.asarray([float(i) for i in df.columns[1:]])])
-    table_shape = data.shape
-    bounds = np.asarray([[np.min(space[0]),np.min(space[1])],[np.max(space[0]),np.max(space[1])]])
+    table = np.transpose(np.asarray(np.transpose(df))[1:])
+
+    if table.shape[1] == 1:
+        table = np.repeat(table,2,axis=1) # This line converts the table into a 2D format if it is 1D
+    # Table shape should be in the form of (1,table.shape[0],table.shape[1],1) to comply with the class
+    table = np.expand_dims(table,0)
+    table = np.expand_dims(table,-1)
+    # Fetch the upper and lower bounds of the axes of the table
+    grid_space = np.asarray([np.asarray(df['xval']),np.asarray([float(i) for i in df.columns[1:]])])
+    bounds = np.asarray([[np.min(grid_space[0]),np.min(grid_space[1])],[np.max(grid_space[0]),np.max(grid_space[1])]])
+    table_shape = table.shape
     
-    # Input Query Points
-    q = np.asarray([[2.0,1.0],[1.0,0.9],[0.3,0.5]])
-    input_array = ops.convert_to_tensor(q,dtype=tf.float32)
-    input_shape = input_array.shape
-    input_array= tf.expand_dims(input_array,0)
+    # Input query points
+    query_points = np.asarray([[2.0,1.0],[1.0,0.9],[0.3,0.5]])
+    query_points = query_points[np.newaxis,:,:]
+    input_shape = query_points.shape
     
-    model = create_model(data, bounds, input_shape, table_shape)
-    result = model.predict(input_array, steps = 1)
+    # Build the model and pass the query points
+    model = create_model(table, bounds, input_shape, table_shape)
+    result = model.predict(query_points)
     print(result)

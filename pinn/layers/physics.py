@@ -49,7 +49,7 @@ import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
 
-TODO: addept to tf2
+#TODO: addept to tf2
 from tensorflow.compat.v1 import placeholder
 
 from tensorflow import reshape
@@ -188,20 +188,19 @@ class SNCurve(Layer):
                                       shape = [2],
                                       initializer = self.kernel_initializer,
                                       dtype = self.dtype,
-                                      trainable = True,
+                                      trainable = self.trainable,
                                       **kwargs)
         self.built = True
 
     def call(self, inputs):
         output = 1/10**(self.kernel[0]*inputs+self.kernel[1])
-        if(output.shape[0].value is not None):
-            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
         return output
 
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1) 
-    
+
+
 class WalkerModel(Layer):
     """A modified version of Paris law to take into account the stress ratio effect.
     `WalkerModel` implements the operation:
@@ -253,4 +252,4 @@ class WalkerModel(Layer):
 
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
-        return aux_shape[:-1].concatenate(1) 
+        return aux_shape[:-1].concatenate(1)
