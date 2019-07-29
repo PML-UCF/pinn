@@ -49,6 +49,7 @@ import tensorflow as tf
 
 import numpy as np
 import pandas as pd
+import os
 
 from model import create_model
 
@@ -101,14 +102,13 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
     EPOCHS = 5
     jmdDir = "./training_%d_points" % len(idxTrain)
+    os.mkdir(jmdDir)
     weight_path = jmdDir + "/cp.ckpt"
     ModelCheckpoint = tf.keras.callbacks.ModelCheckpoint(filepath=weight_path, monitor='loss',
                                                          verbose=1, save_best_only=True,
                                                          mode='min', save_weights_only=True)
 
-    CSVLogger = tf.keras.callbacks.CSVLogger(filename=jmdDir + "/training.log", append=False)
-
-    callbacks_list = [ModelCheckpoint, CSVLogger]
+    callbacks_list = [ModelCheckpoint]
 
     history = model.fit(Sobs, aTarget, epochs=EPOCHS, steps_per_epoch=1, verbose=1, callbacks=callbacks_list)
 
