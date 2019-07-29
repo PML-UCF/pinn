@@ -103,13 +103,10 @@ class StressIntensityRange(Layer):
         inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
         if common_shapes.rank(inputs) is not 2: 
             raise ValueError('`StressIntensityRange` only takes "rank 2" inputs.')
-        
-        if inputs.shape[0] is not None:
-            output = gen_math_ops.mul(self.kernel*inputs[:,1], gen_math_ops.sqrt(np.pi*inputs[:,0]))
-            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
-        else:
-            output = placeholder(dtype=self.dtype,
-                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
+
+        output = gen_math_ops.mul(self.kernel*inputs[:,1], gen_math_ops.sqrt(np.pi*inputs[:, 0]))
+        output = array_ops.reshape(output, (array_ops.shape(output)[0], 1))
+
         # outputs should be (None, 1), so it is still rank = 2
         return output
     
@@ -117,7 +114,7 @@ class StressIntensityRange(Layer):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1)
 
-		
+
 class ParisLaw(Layer):
     """Just your regular Paris law implementation.
     `ParisLaw` implements the operation:

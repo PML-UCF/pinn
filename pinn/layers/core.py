@@ -43,7 +43,7 @@
 # ==============================================================================
 """ Core PINN layers
 """
-from tensorflow.keras.layers import Dense
+from tensorflow.python.keras.layers import Dense
 
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
@@ -55,18 +55,14 @@ from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import common_shapes
 from tensorflow.python.framework import ops
 
-from tensorflow.python.ops import gen_math_ops, array_ops
+from tensorflow.python.ops import array_ops
 
-#TODO: Addept to tf2 
-#from tensorflow.contrib.image.python.ops.dense_image_warp import _interpolate_bilinear as interpolate
 from pinn.layers import interpolate
 
-from tensorflow import reshape, shape, expand_dims, constant
-
-from tensorflow.dtypes import cast
-
+from tensorflow import shape, expand_dims, constant, cast
 
 import numpy as np
+
 
 def getScalingDenseLayer(input_location, input_scale):
     recip_input_scale = np.reciprocal(input_scale)
@@ -79,6 +75,7 @@ def getScalingDenseLayer(input_location, input_scale):
     dL.set_weights([waux, baux])
     dL.trainable = False
     return dL
+
 
 def inputsSelection(inputs_shape, ndex):
     if not hasattr(ndex,'index'):
@@ -95,52 +92,7 @@ def inputsSelection(inputs_shape, ndex):
     dL.set_weights([input_mask])
     dL.trainable = False
     return dL
- 
-class SigmoidSelector(Layer):
-    """ 
-        `output = sig*inputs[:,2]+(1-sig)*inputs[:,1]`
-        where:
-            * `sig` is the response of the sigmoid function used to filter between 
-                    initiation and propagation mechanisms,
-            * inputs[:,0] is current crack length of the previous time step,
-            * inputs[:,1] is crack length variation for the initiation stage,
-            * inputs[:,2] is crack length variation for the propagation stage,
-            * output is the overall crack length variation         
-    """
-    def __init__(self,
-                 kernel_initializer = 'glorot_uniform',
-                 kernel_regularizer=None,
-                 kernel_constraint=None,
-                 **kwargs):
-        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
-            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
-        super(SigmoidSelector, self).__init__(**kwargs)
-        self.kernel_initializer = initializers.get(kernel_initializer)
-        self.kernel_regularizer = regularizers.get(kernel_regularizer)
-        self.kernel_constraint  = constraints.get(kernel_constraint)
-        
-    def build(self, input_shape, **kwargs):
-        self.kernel = self.add_weight("kernel",
-                                      shape = [2],
-                                      initializer = self.kernel_initializer,
-                                      dtype = self.dtype,
-                                      trainable = True,
-                                      **kwargs)
-        self.built = True
-        
-    def call(self, inputs):
-        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        rank = common_shapes.rank(inputs)
-        if rank is not 2:
-            raise ValueError('`SigmoidSelector` only takes "rank 2" inputs.')
-        sig = 1/(1+gen_math_ops.exp(-self.kernel[0]*(inputs[:,0]-self.kernel[1])))
-        output = sig*inputs[:,2]+(1-sig)*inputs[:,1]
-        return output
 
-    def compute_output_shape(self, input_shape):
-        aux_shape = tensor_shape.TensorShape((None,1))
-        
-        return aux_shape[:-1].concatenate(1)
 
 class TableInterpolation(Layer):
     """ Table lookup and interpolation implementation.
@@ -183,10 +135,10 @@ class TableInterpolation(Layer):
         self.built = True
 
     def call(self, inputs):
-        self.grid = ops.convert_to_tensor(self.grid,dtype='float32')
-        self.bounds = ops.convert_to_tensor(self.bounds,dtype='float32')
+        self.grid = ops.convert_to_tensor(self.grid, dtype=self.dtype)
+        self.bounds = ops.convert_to_tensor(self.bounds,dtype=self.dtype)
         inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        queryPoints_ind = ((cast(shape(self.grid)[1:3], dtype='float32'))-constant(1.0))*(inputs-self.bounds[0])/(self.bounds[1]-self.bounds[0])
+        queryPoints_ind = ((cast(shape(self.grid)[1:3], dtype=self.dtype))-constant(1.0))*(inputs-self.bounds[0])/(self.bounds[1]-self.bounds[0])
         if common_shapes.rank(inputs) == 2:
             queryPoints_ind = expand_dims(queryPoints_ind,0)
         output = interpolate(self.grid, queryPoints_ind)
