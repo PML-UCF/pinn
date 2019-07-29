@@ -47,11 +47,11 @@
 
 import numpy as np
 import pandas as pd
-import tensorflow as tf
+#import tensorflow as tf
 
 import matplotlib.pyplot as plt
 
-from tensorflow.python.framework import ops
+#from tensorflow.python.framework import ops
 
 import sys
 sys.path.append('../../../')
@@ -60,12 +60,14 @@ from model import create_model
 #--------------------------------------------------------------------------
 if __name__ == "__main__":
     
+    myDtype = 'float32'
+
     #--------------------------------------------------------------------------
     # Sequence for importing input loads for each asset as time series
-    df = pd.read_csv('Loads_1000cycles.csv', index_col = None)
+    df = pd.read_csv('Loads_1000cycles.csv', index_col = None, dtype=myDtype)
     macArray = np.transpose(np.asarray(df))
     nFleet, nCycles = macArray.shape
-    avgLoads = np.linspace(100,500,nFleet)
+    avgLoads = np.linspace(100,500,nFleet,dtype=myDtype)
     
     #--------------------------------------------------------------------------
     # Preliminary parameters
@@ -84,13 +86,12 @@ if __name__ == "__main__":
     #        * C is the basic dynamic load rating (taken as 6000 kN for SKF 230/600 CAW33 model bearing)
     #        * P is the equivalent dynamic bearing load (cyclic input load)
     #        * Life cycles in millions for corresponding P
-    myDtype = tf.float32
     
     a = -10/3                  # Slope of linearized SN-Curve in log10-log10 space
     b = 12.594                 # Interception of linearized SN-Curve in log10-log10 space
     N = a*np.log10(macArray)+b # Number of cycles for corresponding load
     d = 1/10**N                # Delta damage
-    do = 0                     # Initial damage
+    d0 = 0.                    # Initial damage
     ndex = [1]                 # To filter load from inputs
     #--------------------------------------------------------------------------
     # Sequence for damage history calculation
@@ -102,17 +103,18 @@ if __name__ == "__main__":
             dmgCum += dCyc
             dHist.append(dmgCum)
         dHistAll.append(dHist)
-    dHistAll = np.asarray(dHistAll)
+    dHistAll = np.asarray(dHistAll, dtype=myDtype)
     
     # Input loads tensor manipulations
     Sobs = macArray[:, :, np.newaxis]
     Sobs = np.log10(Sobs)
-    Sobs = ops.convert_to_tensor(Sobs, dtype = myDtype)
+#    Sobs = ops.convert_to_tensor(Sobs, dtype = myDtype)
     batch_input_shape = Sobs.shape
     
     #--------------------------------------------------------------------------
     # Prediction sequence
-    da0RNN = ops.convert_to_tensor(do * np.ones((Sobs.shape[0], 1)), dtype=myDtype)
+#    da0RNN = ops.convert_to_tensor(d0 * np.ones((Sobs.shape[0], 1)), dtype=myDtype)
+    da0RNN = d0 * np.ones((Sobs.shape[0], 1), dtype=myDtype)
         
     model = create_model(a = a, b = b, batch_input_shape = batch_input_shape, ndex = ndex,
                          da0RNN = da0RNN, myDtype = myDtype, return_sequences = True)

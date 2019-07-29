@@ -45,14 +45,17 @@
 """ PINN layers
 """
 
+from .util import interpolate
+
 from .core import getScalingDenseLayer
 from .core import inputsSelection
-from .core import SigmoidSelector
+
 from .core import TableInterpolation
 
 from .physics import StressIntensityRange
 from .physics import ParisLaw
 from .physics import SNCurve
+
 from .physics import WalkerModel
 from .physics import WalkerEq
 
@@ -61,3 +64,4 @@ from .rnn import CumulativeDamageCell
 del physics
 del rnn
 del core
+del util

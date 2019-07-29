@@ -45,9 +45,6 @@
 """
 from tensorflow.keras.layers import Dense
 
-from tensorflow.linalg import diag as tfDiag
-from tensorflow.math import reciprocal
-
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 from tensorflow.python.keras import constraints
@@ -58,15 +55,16 @@ from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import common_shapes
 from tensorflow.python.framework import ops
 
-from tensorflow.python.ops import gen_math_ops
+from tensorflow.python.ops import gen_math_ops, array_ops
 
 #TODO: Addept to tf2 
 #from tensorflow.contrib.image.python.ops.dense_image_warp import _interpolate_bilinear as interpolate
+from pinn.layers import interpolate
 
 from tensorflow import reshape, shape, expand_dims, constant
 
-#TODO: Addept to tf2
-from tensorflow.compat.v1 import float32, to_float
+from tensorflow.dtypes import cast
+
 
 import numpy as np
 
@@ -158,6 +156,7 @@ class TableInterpolation(Layer):
                  kernel_initializer = 'glorot_uniform',
                  kernel_regularizer=None,
                  kernel_constraint=None,
+                 table_shape=(1,4,4,1),
                  **kwargs):
         if 'input_shape' not in kwargs and 'input_dim' in kwargs:
             kwargs['input_shape'] = (kwargs.pop('input_dim'),)
@@ -166,30 +165,33 @@ class TableInterpolation(Layer):
         self.kernel_regularizer = regularizers.get(kernel_regularizer)
         self.kernel_constraint  = constraints.get(kernel_constraint)
         
+        self.table_shape = table_shape
+        
     def build(self, input_shape, **kwargs):
         self.grid = self.add_weight("grid",
-                                      shape = input_shape,
+                                      shape = self.table_shape,
                                       initializer = self.kernel_initializer,
                                       dtype = self.dtype,
-                                      trainable = True,
+                                      trainable = self.trainable,
                                       **kwargs)
         self.bounds = self.add_weight("bounds",
                                       shape = [2,2],
                                       initializer = self.kernel_initializer,
                                       dtype = self.dtype,
-                                      trainable = True,
+                                      trainable = self.trainable,
                                       **kwargs)
         self.built = True
 
     def call(self, inputs):
-        self.grid = ops.convert_to_tensor(self.grid,dtype=float32)
-        self.bounds = ops.convert_to_tensor(self.bounds,dtype=float32)
-        queryPoints_ind = ((to_float(shape(self.grid)[1:3]))-constant(1.0))*(inputs-self.bounds[0])/(self.bounds[1]-self.bounds[0])
+        self.grid = ops.convert_to_tensor(self.grid,dtype='float32')
+        self.bounds = ops.convert_to_tensor(self.bounds,dtype='float32')
+        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
+        queryPoints_ind = ((cast(shape(self.grid)[1:3], dtype='float32'))-constant(1.0))*(inputs-self.bounds[0])/(self.bounds[1]-self.bounds[0])
         if common_shapes.rank(inputs) == 2:
             queryPoints_ind = expand_dims(queryPoints_ind,0)
         output = interpolate(self.grid, queryPoints_ind)
         if common_shapes.rank(inputs) == 2:
-            output = reshape(output,shape=[output.shape[1],output.shape[2]])
+            output = array_ops.reshape(output,(array_ops.shape(output)[1],) + (array_ops.shape(output)[2],))
         return output
 
     def compute_output_shape(self, input_shape):
