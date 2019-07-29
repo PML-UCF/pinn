@@ -47,9 +47,8 @@
 import numpy as np
 import tensorflow as tf
 
-import sys
-sys.path.append('../../../')
 from pinn.layers.core import inputsSelection
+
 
 # =============================================================================
 # Function
@@ -59,18 +58,20 @@ def create_model(input_shape, ndex):
     model = tf.keras.Sequential()
     model.add(dLSelction)
     return model
+
+
 # =============================================================================
 # Main
 # =============================================================================
 if __name__ == "__main__":
     np.random.seed(123)
 
-    input_array = np.random.random((10,5))
+    input_array = np.random.random((10, 5))
     input_shape = input_array.shape
-    ndex = np.asarray([0,2,4])
+    ndex = np.asarray([0, 2, 4])
 
     test_model = create_model(input_shape, ndex)
-    out = test_model.predict(input_array.reshape((1,10,5)))
+    out = test_model.predict(input_array.reshape((1, 10, 5)))
 
     print("Input Array")
     print(input_array)
