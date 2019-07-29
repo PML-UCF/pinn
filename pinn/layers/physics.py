@@ -49,7 +49,7 @@ import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
 
-TODO: addept to tf2
+#TODO: addept to tf2
 from tensorflow.compat.v1 import placeholder
 
 from tensorflow import reshape
