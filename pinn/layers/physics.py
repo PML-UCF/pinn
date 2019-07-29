@@ -49,12 +49,18 @@ import numpy as np
 
 from tensorflow.python.keras.engine.base_layer import Layer
 
+#TODO: addept to tf2
+from tensorflow.compat.v1 import placeholder
+
+from tensorflow.python.ops import gen_math_ops, array_ops
+
+from tensorflow import reshape
+
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 from tensorflow.python.keras import constraints
 
 from tensorflow.python.framework import ops
-from tensorflow.python.ops import gen_math_ops
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import common_shapes
 
@@ -83,9 +89,7 @@ class StressIntensityRange(Layer):
         
     def build(self, input_shape):
         input_shape = tensor_shape.TensorShape(input_shape)
-        if input_shape[-1].value is None:
-            raise ValueError('The last dimension of the inputs to `StressIntensityRange` '
-                             'should be defined. Found `None`.')
+
         self.kernel = self.add_weight("kernel",
                                       shape = [1],
                                       initializer = self.kernel_initializer,
@@ -96,17 +100,21 @@ class StressIntensityRange(Layer):
         self.built = True
 
     def call(self, inputs):
-        inputs  = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        if common_shapes.rank(inputs) is not 2:
+        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
+        if common_shapes.rank(inputs) is not 2: 
             raise ValueError('`StressIntensityRange` only takes "rank 2" inputs.')
-        output = self.kernel*inputs[:,1]*gen_math_ops.sqrt(np.pi*inputs[:,0])
+
+        output = gen_math_ops.mul(self.kernel*inputs[:,1], gen_math_ops.sqrt(np.pi*inputs[:, 0]))
+        output = array_ops.reshape(output, (array_ops.shape(output)[0], 1))
+
+        # outputs should be (None, 1), so it is still rank = 2
         return output
     
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1)
 
-		
+
 class ParisLaw(Layer):
     """Just your regular Paris law implementation.
     `ParisLaw` implements the operation:
@@ -145,4 +153,103 @@ class ParisLaw(Layer):
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1) 
-		
+
+
+class SNCurve(Layer):
+    """ SN-Curve implementation (REF: https://en.wikipedia.org/wiki/Fatigue_(material)#Stress-cycle_(S-N)_curve)
+        `output = 1/10**(a*inputs+b)`
+        where:
+            * `a`,`b` parametric constants for linear curve,
+            * input is cyclic stress, load, or temperature (depends on the application) in log10 space,
+            * output is delta damage
+        Notes:
+            * This layer represents SN-Curve linearized in log10-log10 space
+            * (a*inputs+b) expression gives number of cycles in log10 space corresponding to stress level
+        Linearization:
+            * For an SN-Curve with an equation of N = C1*(S**C2) , take log10 of both sides
+            * log10(N) = log10(C1) + C2*log10(S), yields to:
+                C2 = a
+                log10(C1) = b
+                log10(S) = inputs            
+    """
+    def __init__(self,
+                 kernel_initializer = 'glorot_uniform',
+                 kernel_regularizer=None,
+                 kernel_constraint=None,
+                 **kwargs):
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(SNCurve, self).__init__(**kwargs)
+        self.kernel_initializer = initializers.get(kernel_initializer)
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.kernel_constraint  = constraints.get(kernel_constraint)
+        
+    def build(self, input_shape, **kwargs):
+        self.kernel = self.add_weight("kernel",
+                                      shape = [2],
+                                      initializer = self.kernel_initializer,
+                                      dtype = self.dtype,
+                                      trainable = self.trainable,
+                                      **kwargs)
+        self.built = True
+
+    def call(self, inputs):
+        output = 1/10**(self.kernel[0]*inputs+self.kernel[1])
+        return output
+
+    def compute_output_shape(self, input_shape):
+        aux_shape = tensor_shape.TensorShape((None,1))
+        return aux_shape[:-1].concatenate(1) 
+
+
+class WalkerModel(Layer):
+    """A modified version of Paris law to take into account the stress ratio effect.
+    `WalkerModel` implements the operation:
+        `output = C*(inputs[:,0]**m)`
+        where `C` and `m` are constants, and `C` is obtained from the following
+        relation:
+            `C = Co/((1-inputs[:,1])**(m*(1-gamma))))`
+            
+            * input[:,0] is the nominal stress range
+            * input[:,1] is the stress ratio, and
+            
+            * sig is a custumized sigmoid function to calibrate Walker's coefficient (gamma)
+                  with respect to the stress ratio value.        
+    """
+    def __init__(self,
+                 kernel_initializer = 'glorot_uniform',
+                 kernel_regularizer=None,
+                 kernel_constraint=None,
+                 **kwargs):
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(WalkerModel, self).__init__(**kwargs)
+        self.kernel_initializer = initializers.get(kernel_initializer)
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.kernel_constraint  = constraints.get(kernel_constraint)
+        
+    def build(self, input_shape, **kwargs):
+        self.kernel = self.add_weight("kernel",
+                                      shape = [4],
+                                      initializer = self.kernel_initializer,
+                                      dtype = self.dtype,
+                                      trainable = True,
+                                      **kwargs)
+        self.built = True
+        
+    def call(self, inputs):
+        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
+        if common_shapes.rank(inputs) is not 2: 
+            raise ValueError('`WalkerModel` only takes "rank 2" inputs.')
+ 
+        sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
+        gamma = sig*self.kernel[1]
+        C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))
+        output = C*(inputs[:,0]**self.kernel[3])
+        output = array_ops.reshape(output,(array_ops.shape(output)[0],1))
+        return output
+    
+    def compute_output_shape(self, input_shape):
+        aux_shape = tensor_shape.TensorShape((None,1))
+        return aux_shape[:-1].concatenate(1)
+    

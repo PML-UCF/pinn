@@ -86,7 +86,7 @@ class CumulativeDamageCell(Layer):
         if self.initial_damage is None:
             initial_state = _generate_zero_filled_state_for_cell(self, inputs, batch_size, dtype)
         else:
-            initial_state = self.initial_damage
+            initial_state = ops.convert_to_tensor(self.initial_damage, dtype=self.dtype)
             
         return initial_state
     
