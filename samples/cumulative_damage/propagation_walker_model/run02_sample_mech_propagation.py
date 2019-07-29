@@ -45,7 +45,9 @@
 """
 import numpy as np
 import pandas as pd
-import tensorflow as tf
+# =============================================================================
+# import tensorflow as tf
+# =============================================================================
 
 import matplotlib.pyplot as plt
 
@@ -54,18 +56,19 @@ from tensorflow.python.framework import ops
 from model import create_model
 #--------------------------------------------------------------------------
 if __name__ == "__main__":
-    myDtype = tf.float32  # defining type for the layer
-
-    dfa = pd.read_csv('Crack_length.csv', index_col = None) # crack length data
+    
+    myDtype = 'float32'
+    
+    dfa = pd.read_csv('Crack_length.csv', index_col = None, dtype = myDtype) # crack length data
     cr = dfa.values[:,1:4] # crack length values for all machines
     cr = cr.transpose() # setting axis as [# of machines, # of cycles]
     idex = np.where(cr[1,:]>.5e-3)[0][0] # index to split data into initiation - propagation stages
     cr = cr[:,idex:-1]
-    dfdS = pd.read_csv('Delta_load.csv', index_col = None) # Load data
+    dfdS = pd.read_csv('Delta_load.csv', index_col = None, dtype = myDtype) # Load data
     dS = dfdS.values[:,1:4] # loads history for all machines 
     dS = dS.transpose() 
     dS = dS[:,idex:-1]
-    dfR = pd.read_csv('Stress_ratio.csv', index_col = None) # Stress ratio data
+    dfR = pd.read_csv('Stress_ratio.csv', index_col = None, dtype = myDtype) # Stress ratio data
     R = dfR.values[:,1:4] # stress ratio values for all machines
     R = R.transpose()
     R = R[:,idex:-1]
@@ -74,9 +77,8 @@ if __name__ == "__main__":
     
     # RNN inputs
     input_array = np.dstack((dS, R))
-    inputTensor = ops.convert_to_tensor(input_array, dtype = myDtype)
     
-    a0RNN = np.zeros((input_array.shape[0], 1)) 
+    a0RNN = np.zeros((input_array.shape[0], 1), dtype = myDtype) 
     a0RNN[0] = cr[0,0] # initial crack length asset #1
     a0RNN[1] = cr[1,0] # initial crack length asset #2
     a0RNN[-1] = cr[-1,0] # initial crack length asset #3
