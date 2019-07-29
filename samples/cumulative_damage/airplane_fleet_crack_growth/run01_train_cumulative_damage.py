@@ -49,7 +49,6 @@ import tensorflow as tf
 
 import numpy as np
 import pandas as pd
-import os
 
 from model import create_model
 
@@ -102,7 +101,7 @@ if __name__ == "__main__":
     # --------------------------------------------------------------------------
     EPOCHS = 5
     jmdDir = "./training_%d_points" % len(idxTrain)
-    os.mkdir(jmdDir)
+
     weight_path = jmdDir + "/cp.ckpt"
     ModelCheckpoint = tf.keras.callbacks.ModelCheckpoint(filepath=weight_path, monitor='loss',
                                                          verbose=1, save_best_only=True,
