@@ -52,13 +52,13 @@ from tensorflow.python.keras.engine.base_layer import Layer
 #TODO: addept to tf2
 from tensorflow.compat.v1 import placeholder
 
+from tensorflow.python.ops import gen_math_ops, array_ops
+
 from tensorflow import reshape
 
 from tensorflow.python.keras import initializers
 from tensorflow.python.keras import regularizers
 from tensorflow.python.keras import constraints
-
-from tensorflow.python.ops import gen_math_ops
 
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import tensor_shape
@@ -244,68 +244,15 @@ class WalkerModel(Layer):
         inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
         if common_shapes.rank(inputs) is not 2: 
             raise ValueError('`WalkerModel` only takes "rank 2" inputs.')
-        
-        if inputs.shape[0] is not None:
-            sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
-            gamma = sig*self.kernel[1]
-            C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))
-            output = C*(inputs[:,0]**self.kernel[3])
-            output = reshape(output, (tensor_shape.TensorShape((output.shape[0],1))))
-        else:
-            output = placeholder(dtype=self.dtype,
-                                 shape=tensor_shape.TensorShape([inputs.shape[0],1]))
-        # outputs should be (None, 1), so it is still rank = 2
-        return output
-    
-    def compute_output_shape(self, input_shape):
-        aux_shape = tensor_shape.TensorShape((None,1))
-        return aux_shape[:-1].concatenate(1)
-    
-class WalkerEq(Layer):
-    """A modified version of Walker Model.
-    `WalkerEq` implements the operation:
-        `output = C*(inputs[:,0]**m)`
-        where `C` and `m` are constants, and `C` is obtained from the following
-        relation:
-            `C = Co/((1-inputs[:,1])**(m*(1-gamma))))`
-            
-            * input[:,0] is the nominal stress range
-            * input[:,1] is the stress ratio, and
-            
-            * sig is a custumized sigmoid function to calibrate Walker's coefficient (gamma)
-                  with respect to the stress ratio value.        
-    """
-    def __init__(self,
-                 kernel_initializer = 'glorot_uniform',
-                 kernel_regularizer=None,
-                 kernel_constraint=None,
-                 **kwargs):
-        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
-            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
-        super(WalkerEq, self).__init__(**kwargs)
-        self.kernel_initializer = initializers.get(kernel_initializer)
-        self.kernel_regularizer = regularizers.get(kernel_regularizer)
-        self.kernel_constraint  = constraints.get(kernel_constraint)
-        
-    def build(self, input_shape, **kwargs):
-        self.kernel = self.add_weight("kernel",
-                                      shape = [4],
-                                      initializer = self.kernel_initializer,
-                                      dtype = self.dtype,
-                                      trainable = True,
-                                      **kwargs)
-        self.built = True
-
-    def call(self, inputs):
-        inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        if common_shapes.rank(inputs) is not 2:
-            raise ValueError('`WalkerModel` only takes "rank 2" inputs.')
+ 
         sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
         gamma = sig*self.kernel[1]
-        C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))    
+        C = self.kernel[2]/((1-inputs[:,1])**(self.kernel[3]*(1-gamma)))
         output = C*(inputs[:,0]**self.kernel[3])
+        output = array_ops.reshape(output,(array_ops.shape(output)[0],1))
         return output
-            
+    
     def compute_output_shape(self, input_shape):
         aux_shape = tensor_shape.TensorShape((None,1))
         return aux_shape[:-1].concatenate(1)
+    

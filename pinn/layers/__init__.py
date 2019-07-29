@@ -57,7 +57,6 @@ from .physics import ParisLaw
 from .physics import SNCurve
 
 from .physics import WalkerModel
-from .physics import WalkerEq
 
 from .rnn import CumulativeDamageCell
 

@@ -41,75 +41,79 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # ==============================================================================
-""" Mechanical propagation sample 
+
+""" Walker model sample 
 """
+
 import numpy as np
 import pandas as pd
-# =============================================================================
-# import tensorflow as tf
-# =============================================================================
+import tensorflow as tf
 
 import matplotlib.pyplot as plt
 
-from tensorflow.python.framework import ops
+from pinn.layers import WalkerModel
+# =============================================================================
+# Functions
+# =============================================================================
+def create_model(alpha, gamma, C0, m , batch_input_shape, myDtype):
+    wmLayer = WalkerModel(input_shape = batch_input_shape, dtype = myDtype)
+    wmLayer.build(input_shape = batch_input_shape)
+    wmLayer.set_weights([np.asarray([alpha,gamma,C0,m], dtype = wmLayer.dtype)])
+    wmLayer.trainable = False
+    
+    model = tf.keras.Sequential()
+    model.add(wmLayer)        
+    return model
 
-from model import create_model
+def threshold(R,gammaval): # numpy implementation of the step function to calibrate gamma value 
+    gamma = np.zeros(len(R))
+    for i in range(len(R)):
+        if R[i]<0:
+            gamma[i] = 0
+        else:
+            gamma[i] = gammaval
+    return gamma
+
+def walker(dK,R,gammaval,Co,m): # implementation of the layer in matrix form for comparison purposes
+    gamma = threshold(R,gammaval)
+    C = Co/((1-R)**(m*(1-gamma)))
+    da = C*(dK**m)
+    return da
+
+
 #--------------------------------------------------------------------------
 if __name__ == "__main__":
+    myDtype = 'float32'  # defining type for the layer
     
-    myDtype = 'float32'
+    df = pd.read_csv('Walker_model_data.csv', index_col = None, dtype = myDtype) # loading required data
+    dK = df['dK'].values # stress intensity values for 10 different machines at a given instant t
+    R = df['R'].values # stress ratio values for 10 different machines at a given instant t
+
+    #--------------------------------------------------------------------
+    # Numpy implementation of Walker's equation coefficient
+    gammaval = .68
+    C0,m = 1.1323e-10,3.859 # Walker model coefficients (similar to Paris law)     
+    danp = walker(dK,R,gammaval,C0,m) # prediction of the genereic numpy function
+    #--------------------------------------------------------------------
+    input_array = np.asarray([dK,R])
+    input_array = np.transpose(input_array)
     
-    dfa = pd.read_csv('Crack_length.csv', index_col = None, dtype = myDtype) # crack length data
-    cr = dfa.values[:,1:4] # crack length values for all machines
-    cr = cr.transpose() # setting axis as [# of machines, # of cycles]
-    idex = np.where(cr[1,:]>.5e-3)[0][0] # index to split data into initiation - propagation stages
-    cr = cr[:,idex:-1]
-    dfdS = pd.read_csv('Delta_load.csv', index_col = None, dtype = myDtype) # Load data
-    dS = dfdS.values[:,1:4] # loads history for all machines 
-    dS = dS.transpose() 
-    dS = dS[:,idex:-1]
-    dfR = pd.read_csv('Stress_ratio.csv', index_col = None, dtype = myDtype) # Stress ratio data
-    R = dfR.values[:,1:4] # stress ratio values for all machines
-    R = R.transpose()
-    R = R[:,idex:-1]
-        
-    nFleet, nCycles  = np.shape(cr) 
-    
-    # RNN inputs
-    input_array = np.dstack((dS, R))
-    
-    a0RNN = np.zeros((input_array.shape[0], 1), dtype = myDtype) 
-    a0RNN[0] = cr[0,0] # initial crack length asset #1
-    a0RNN[1] = cr[1,0] # initial crack length asset #2
-    a0RNN[-1] = cr[-1,0] # initial crack length asset #3
-    a0RNN = ops.convert_to_tensor(a0RNN, dtype=myDtype)
-    
-    # model parameters
-    F = 2.8 # stress intensity factor
-    alpha,gamma = -1e8,.68 # Walker model customized sigmoid function parameters
-    Co,m = 1.1323e-10,3.859 # Walker model coefficients (similar to Paris law) 
+    alpha,gammatf = -1e8,gammaval # Walker model customized sigmoid function parameters
     #--------------------------------------------------------------------------
-    batch_input_shape = input_array.shape
+    # Walker model implementation in Tensorflow    
+    batch_input_shape = (input_array.shape[-1],)
     
-    selectdK = [0,1]
-    selectprop = [2]
-    
-    model = create_model(F, alpha, gamma, Co, m , a0RNN, batch_input_shape, input_array, selectdK, selectprop, myDtype, return_sequences = True)
+    model = create_model(alpha = alpha, gamma = gammatf, C0 = C0, m = m, batch_input_shape = batch_input_shape, myDtype = myDtype)
     results = model.predict_on_batch(input_array) # custumized layer prediction
-    #--------------------------------------------------------------------------
+    #--------------------------------------------------------------------
     fig  = plt.figure(1)
     fig.clf()
     
-    plt.plot(1e3*cr[0,:],':k', label = 'asset #1')
-    plt.plot(1e3*cr[1,:],'--m', label = 'asset #2')
-    plt.plot(1e3*cr[-1,:],'-g', label = 'asset #3')
-    plt.plot(1e3*results[0,:,0],':', label = 'PINN #1')
-    plt.plot(1e3*results[1,:,0],'--', label = 'PINN #2')
-    plt.plot(1e3*results[-1,:,0],'-', label = 'PINN #3')
-             
-    plt.title('Mech. Propagation')
-    plt.xlabel('Cycles')
-    plt.ylabel('$\Delta$ a [mm]')
+    plt.plot(dK,danp,'ok', label = 'numpy')
+    plt.plot(dK,results,'sm', label = 'tf Layer')
+        
+    plt.title('Walker model response')
+    plt.xlabel('$\Delta$ K [MPa $m^{1/2}$]')
+    plt.ylabel('$\Delta$ a [m]')
     plt.legend(loc=0, facecolor = 'w')
     plt.grid(which = 'both')
-    
