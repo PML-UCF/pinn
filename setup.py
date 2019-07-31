@@ -9,7 +9,7 @@ def read(fname):
 setup(
     name='pml-pinn',
     version="0.0.2",
-    author='Felipe Viana, Renato G. Nascimento, Yigit Yucesan, Arinan Dourado',
+    author='Felipe A. C. Viana, Renato G. Nascimento, Yigit Yucesan, Arinan Dourado',
     author_email='viana@ucf.edu, renato.gn@knights.ucf.edu, yucesan@knights.ucf.edu, arinandourado@knights.ucf.edu',
     description='Physics-informed neural networks',
     url='https://github.com/PML-UCF/pinn',
