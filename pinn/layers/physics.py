@@ -203,7 +203,7 @@ class SNCurve(Layer):
 
 
 class WalkerModel(Layer):
-        """A modified version of Paris law to take into account the stress ratio effect on 
+    """A modified version of Paris law to take into account the stress ratio effect on 
     crack propagation.
     (REF: Dowling, N. E., (2012). Mechanical behavior of materials: engineering methods for 
     deformation, fracture and fatigue. Pearson.)
