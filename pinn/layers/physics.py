@@ -203,18 +203,50 @@ class SNCurve(Layer):
 
 
 class WalkerModel(Layer):
-    """A modified version of Paris law to take into account the stress ratio effect.
-    `WalkerModel` implements the operation:
-        `output = C*(inputs[:,0]**m)`
-        where `C` and `m` are constants, and `C` is obtained from the following
-        relation:
-            `C = Co/((1-inputs[:,1])**(m*(1-gamma))))`
+        """A modified version of Paris law to take into account the stress ratio effect on 
+    crack propagation.
+    (REF: Dowling, N. E., (2012). Mechanical behavior of materials: engineering methods for 
+    deformation, fracture and fatigue. Pearson.)
+    
+    `WalkerModel` implements the operation: `output = C*(inputs[:,0]**m)` where `C` and `m` are 
+    constants, and `C` is obtained from the following relation: `C = C0/((1-inputs[:,1])**(m*(1-gamma))))`
+    
+    The addressed inputs and constants referrs to:
+         
+            * input[:,0] nominal stress range
+            * input[:,1] stress ratio, 
+            * C0,m material properties, and
+            * gamma Walker's equation coefficient (varying with the material)
             
-            * input[:,0] is the nominal stress range
-            * input[:,1] is the stress ratio, and
+    Remark: sig is a custumized sigmoid function to calibrate Walker's coefficient (gamma)
+    with respect to the stress ratio value.
+    
+    Note: `WalkerModel` only takes "rank 2" inputs.
+
+    Example:
+    
+    # as a layer in a sequential model:
+    
+    wmLayer = WalkerModel(input_shape = (2,))
+    
+    # builting the WalkerModel layer taking as input arrays of shape (*, 2)
+    
+    wmLayer.set_weights([np.asarray([-1e-8,gamma,C0,m], dtype = wmLayer.dtype)])
+    
+    # defining the WalkerModel constants values (first value referrs to the customized sigmoid,
+    gamma is the Walker's coefficient, and C0,m are material properties)
             
-            * sig is a custumized sigmoid function to calibrate Walker's coefficient (gamma)
-                  with respect to the stress ratio value.        
+    model = Sequential()
+    
+    model.add(wmLayer)
+    
+    
+    Input shape:
+        Tensor with shape: `(batch_size, 2)`.
+
+    Output shape:
+        Tensor with shape: `(batch_size, 1)`.          
+                    
     """
     def __init__(self,
                  kernel_initializer = 'glorot_uniform',
