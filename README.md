@@ -25,7 +25,7 @@ pip install -e .
 Please, cite this repository using: 
 
     @misc{2019_pinn,
-        author    = {F. A. C. Viana, R. G. Nascimento, Y. Yucesan, A. Dourado},
+        author    = {Felipe A. C. Viana and Renato G. Nascimento and Yigit Yucesan and Arinan Dourado},
         title     = {Physics-informed neural networks package},
         month     = Aug,
         year      = 2019,
@@ -36,4 +36,5 @@ Please, cite this repository using:
         }
   The corresponding reference entry should look like:
 
-      F. A. C. Viana, R. G. Nascimento, Y. Yucesan, A. Dourado, Physics-informed neural networks package, v0.0.2, Zenodo, https://github.com/PML-UCF/pinn, doi:10.5281/zenodo.3356877.
+      F. A. C. Viana, R. G. Nascimento, Y. Yucesan, and A. Dourado, Physics-informed neural networks package, v0.0.2, Aug. 2019.
+doi:10.5281/zenodo.3356877, URL https://github.com/PML-UCF/pinn.
