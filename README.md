@@ -36,5 +36,4 @@ Please, cite this repository using:
         }
   The corresponding reference entry should look like:
 
-      F. A. C. Viana, R. G. Nascimento, Y. Yucesan, and A. Dourado, Physics-informed neural networks package, v0.0.2, Aug. 2019.
-doi:10.5281/zenodo.3356877, URL https://github.com/PML-UCF/pinn.
+      F. A. C. Viana, R. G. Nascimento, Y. Yucesan, and A. Dourado, Physics-informed neural networks package, v0.0.2, Aug. 2019. doi:10.5281/zenodo.3356877, URL https://github.com/PML-UCF/pinn.
