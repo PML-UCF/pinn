@@ -67,8 +67,8 @@ def build_model():
 
 
 def create_model(dkLayer, C, m, batch_input_shape, a0RNN, myDtype, return_sequences=False, unroll=False):
-    da_input_shape = dkLayer.get_output_shape_at(-1)
-    daLayer = ParisLaw(input_shape=da_input_shape, dtype=myDtype)
+    da_input_shape = dkLayer.output.shape[-1]
+    daLayer = ParisLaw(input_shape=(da_input_shape,), dtype=myDtype)
     daLayer.build(input_shape=da_input_shape)
     daLayer.set_weights([np.asarray([C, m], dtype=daLayer.dtype)])
     daLayer.trainable = False
