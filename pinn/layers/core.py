@@ -52,7 +52,6 @@ from tensorflow.python.keras import constraints
 from tensorflow.python.keras.engine.base_layer import Layer
 
 from tensorflow.python.framework import tensor_shape
-from tensorflow.python.framework import common_shapes
 from tensorflow.python.framework import ops
 
 from tensorflow.python.ops import array_ops
@@ -139,10 +138,10 @@ class TableInterpolation(Layer):
         self.bounds = ops.convert_to_tensor(self.bounds,dtype=self.dtype)
         inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
         queryPoints_ind = ((cast(shape(self.grid)[1:3], dtype=self.dtype))-constant(1.0))*(inputs-self.bounds[0])/(self.bounds[1]-self.bounds[0])
-        if common_shapes.rank(inputs) == 2:
+        if inputs.shape.rank == 2:
             queryPoints_ind = expand_dims(queryPoints_ind,0)
         output = interpolate(self.grid, queryPoints_ind)
-        if common_shapes.rank(inputs) == 2:
+        if inputs.shape.rank == 2:
             output = array_ops.reshape(output,(array_ops.shape(output)[1],) + (array_ops.shape(output)[2],))
         return output
 
