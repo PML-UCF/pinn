@@ -47,10 +47,7 @@
 
 import numpy as np
 
-from tensorflow.python.keras.engine.base_layer import Layer
-
-#TODO: addept to tf2
-from tensorflow.compat.v1 import placeholder
+from tensorflow.python.keras.layers import Layer
 
 from tensorflow.python.ops import gen_math_ops, array_ops
 
@@ -62,7 +59,6 @@ from tensorflow.python.keras import constraints
 
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import tensor_shape
-from tensorflow.python.framework import common_shapes
 
 
 class StressIntensityRange(Layer):
@@ -101,7 +97,7 @@ class StressIntensityRange(Layer):
 
     def call(self, inputs):
         inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        if common_shapes.rank(inputs) is not 2: 
+        if inputs.shape.rank != 2: 
             raise ValueError('`StressIntensityRange` only takes "rank 2" inputs.')
 
         output = gen_math_ops.mul(self.kernel*inputs[:,1], gen_math_ops.sqrt(np.pi*inputs[:, 0]))
@@ -144,8 +140,7 @@ class ParisLaw(Layer):
 
     def call(self, inputs):
         inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        rank = common_shapes.rank(inputs)
-        if rank is not 2:
+        if inputs.shape.rank != 2:
             raise ValueError('`ParisLaw` only takes "rank 2" inputs.')
         output = self.kernel[0]*(inputs**self.kernel[1])
         return output
@@ -271,7 +266,7 @@ class WalkerModel(Layer):
         
     def call(self, inputs):
         inputs = ops.convert_to_tensor(inputs, dtype=self.dtype)
-        if common_shapes.rank(inputs) is not 2: 
+        if inputs.shape.rank != 2: 
             raise ValueError('`WalkerModel` only takes "rank 2" inputs.')
  
         sig = 1/(1+gen_math_ops.exp(self.kernel[0]*inputs[:,1]))
