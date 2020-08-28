@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/165746996.svg)](https://zenodo.org/badge/latestdoi/165746996)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3356876.svg)](https://doi.org/10.5281/zenodo.3356876)
 [![PyPI version](https://badge.fury.io/py/pml-pinn.svg)](https://badge.fury.io/py/pml-pinn)
 # Physics-informed neural networks package
 Welcome to the PML repository for physics-informed neural networks. We will use this repository to disseminate our research in this exciting topic.
@@ -28,14 +28,14 @@ Please, cite this repository using:
         title     = {Physics-informed neural networks package},
         month     = Aug,
         year      = 2019,
-        doi       = {10.5281/zenodo.3356877},
+        doi       = {10.5281/zenodo.3356876},
         version   = {0.0.3},
         publisher = {Zenodo},
         url       = {https://github.com/PML-UCF/pinn}
         }
 The corresponding reference entry should look like:
 
-F. A. C. Viana, R. G. Nascimento, Y. Yucesan, and A. Dourado, Physics-informed neural networks package, v0.0.3, Aug. 2019. doi:10.5281/zenodo.3356877, URL https://github.com/PML-UCF/pinn.
+F. A. C. Viana, R. G. Nascimento, Y. Yucesan, and A. Dourado, Physics-informed neural networks package, v0.0.3, Aug. 2019. doi:10.5281/zenodo.3356876, URL https://github.com/PML-UCF/pinn.
 
 ## Publications
 
