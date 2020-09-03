@@ -40,7 +40,9 @@ F. A. C. Viana, R. G. Nascimento, Y. Yucesan, and A. Dourado, Physics-informed n
 ## Publications
 
 ### Journal papers
-- A. Dourado and F. A. C. Viana, "[Physics-informed neural networks for missing physics estimation in cumulative damage models: a case study in corrosion fatigue](https://asmedigitalcollection.asme.org/computingengineering/article-abstract/doi/10.1115/1.4047173/1083614/Physics-informed-neural-networks-for-missing)," ASME Journal of Computing and Information Science in Engineering, Online first, 2020. (DOI: 10.1115/1.4047173).
+- R. G. Nascimento and F. A. C. Viana, "[Cumulative damage modeling with recurrent neural networks](https://arc.aiaa.org/doi/full/10.2514/1.J059250)," AIAA Journal, Online First, 13 pages, 2020. (DOI: 10.2514/1.J059250).
+
+- A. Dourado and F. A. C. Viana, "[Physics-informed neural networks for missing physics estimation in cumulative damage models: a case study in corrosion fatigue](https://asmedigitalcollection.asme.org/computingengineering/article-abstract/doi/10.1115/1.4047173/1083614/Physics-informed-neural-networks-for-missing)," ASME Journal of Computing and Information Science in Engineering, Vol. 20 (6), 10 pages, 2020. (DOI: 10.1115/1.4047173).
 
 - Y. A. Yucesan and F. A. C. Viana, "[A physics-informed neural network for wind turbine main bearing fatigue](http://www.phmsociety.org/node/2736)," International Journal of Prognostics and Health Management, Vol. 11 (1), 2020. (ISSN: 2153-2648).
 
