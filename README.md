@@ -39,7 +39,7 @@ F. A. C. Viana, R. G. Nascimento, Y. Yucesan, and A. Dourado, Physics-informed n
 
 ## Publications
 
-Over time, the following publications used/referred to this repository:
+Over time, the following publications out of the PML-UCF research group used/referred to this repository:
 
 ### Journal papers
 - R. G. Nascimento and F. A. C. Viana, "[Cumulative damage modeling with recurrent neural networks](https://arc.aiaa.org/doi/full/10.2514/1.J059250)," AIAA Journal, Online First, 13 pages, 2020. (DOI: 10.2514/1.J059250).
