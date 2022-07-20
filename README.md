@@ -42,6 +42,18 @@ F. A. C. Viana, R. G. Nascimento, Y. Yucesan, and A. Dourado, Physics-informed n
 Over time, the following publications out of the PML-UCF research group used/referred to this repository:
 
 ### Journal papers
+- A. Dourado, F. A. C. Viana, "[Ensemble of hybrid neural networks to compensate for epistemic uncertainties: a case study in system prognosis](https://link.springer.com/article/10.1007/s00500-022-07129-1)," Soft Computing, Vol. 26 (13), pp. 6157-6173, 2022. (DOI: 10.1007/s00500-022-07129-1).
+
+- Y. A. Yucesan and F. A. C. Viana, "[A hybrid physics-informed neural network for main bearing fatigue prognosis under grease quality variation](https://www.sciencedirect.com/science/article/pii/S088832702200070X)," Mechanical Systems and Signal Processing, Vol. 171, pp. 108875, 2022. (DOI: 10.1016/j.ymssp.2022.108875).
+
+- Y. A. Yucesan, A. Dourado, and F. A. C. Viana, "[A survey of modeling for prognosis and health management of industrial equipment](https://www.sciencedirect.com/science/article/pii/S1474034621001567)," Advanced Engineering Informatics, Vol. 50, pp. 101404, 2021. (DOI: 10.1016/j.aei.2021.101404). 
+
+- F. A. C. Viana and A. K. Subramaniyan, "[A survey of Bayesian calibration and physics-informed neural networks in scientific modeling](https://link.springer.com/article/10.1007/s11831-021-09539-0)," Archives of Computational Methods in Engineering, Vol. 28 (5), pp. 3801-3830, 2021. (DOI: 10.1007/s11831-021-09539-0). . 
+
+- Y. A. Yucesan and F. A. C. Viana, "[Hybrid physics-informed neural networks for main bearing fatigue prognosis with visual grease inspection](https://www.sciencedirect.com/science/article/pii/S0166361520306205)," Computers in Industry, Computers in Industry, Vol. 125, pp. 103386, 2021. (DOI: 10.1016/j.compind.2020.103386).
+
+- F. A. C. Viana, R. G. Nascimento, A. Dourado, and Y. A. Yucesan, "[Estimating model inadequacy in ordinary differential equations with physics-informed neural networks](https://www.sciencedirect.com/science/article/pii/S0045794920302613)," Computers and Structures, Vol. 245, pp. 106458, 2021. (DOI: 10.1016/j.compstruc.2020.106458).
+
 - R. G. Nascimento and F. A. C. Viana, "[Cumulative damage modeling with recurrent neural networks](https://arc.aiaa.org/doi/full/10.2514/1.J059250)," AIAA Journal, Online First, 13 pages, 2020. (DOI: 10.2514/1.J059250).
 
 - A. Dourado and F. A. C. Viana, "[Physics-informed neural networks for missing physics estimation in cumulative damage models: a case study in corrosion fatigue](https://asmedigitalcollection.asme.org/computingengineering/article-abstract/doi/10.1115/1.4047173/1083614/Physics-informed-neural-networks-for-missing)," ASME Journal of Computing and Information Science in Engineering, Vol. 20 (6), 10 pages, 2020. (DOI: 10.1115/1.4047173).
