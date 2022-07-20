@@ -62,9 +62,13 @@ Over time, the following publications out of the PML-UCF research group used/ref
 
 
 ### Conference papers
-- A. Dourado and F. A. C. Viana, "[Physics-informed neural networks for bias compensation in corrosion-fatigue](https://arc.aiaa.org/doi/abs/10.2514/6.2020-1149)," AIAA SciTech Forum, Orlando, USA, January 6-10, 2020, AIAA 2020-1149 (DOI: 10.2514/6.2020-1149).
+- Y. A. Yucesan and F. A. C. Viana, "[A probabilistic hybrid model for main bearing fatigue considering uncertainty in grease quality](https://arc.aiaa.org/doi/abs/10.2514/6.2021-1243)," AIAA Scitech 2021 Forum, Virtual Event, January 11-15 and 19-21, 2021, AIAA–2021–1243 (DOI: 10.2514/6.2021-1243). 
+
+- Y. A. Yucesan and F. A. C. Viana, "[A hybrid model for wind turbine main bearing fatigue with uncertainty in grease observations](https://phmpapers.org/index.php/phmconf/article/view/1139)," Proceedings of the Annual Conference of the PHM Society, Vol. 12 (1), Virtual Event, November 9-13, 2020 (DOI: 10.36001/phmconf.2020.v12i1.1139). 
 
 - Y. A. Yucesan and F. A. C. Viana, "[A hybrid model for main bearing fatigue prognosis based on physics and machine learning](https://arc.aiaa.org/doi/abs/10.2514/6.2020-1412)," AIAA SciTech Forum, Orlando, USA, January 6-10, 2020, AIAA 2020-1412 (DOI: 10.2514/6.2020-1412). 
+
+- A. Dourado and F. A. C. Viana, "[Physics-informed neural networks for bias compensation in corrosion-fatigue](https://arc.aiaa.org/doi/abs/10.2514/6.2020-1149)," AIAA SciTech Forum, Orlando, USA, January 6-10, 2020, AIAA 2020-1149 (DOI: 10.2514/6.2020-1149).
 
 - A. Dourado and F. A. C. Viana, "[Physics-Informed Neural Networks for Corrosion-Fatigue Prognosis](http://phmpapers.org/index.php/phmconf/article/view/814)," Proceedings of the Annual Conference of the PHM Society, Scottsdale,USA, September 21-26, 2019.
 
